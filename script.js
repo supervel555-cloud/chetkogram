@@ -10,7 +10,6 @@ const registerForm = document.getElementById("registerForm");
 const loginUsernameInput = document.getElementById("loginUsernameInput");
 const loginPasswordInput = document.getElementById("loginPasswordInput");
 
-
 const registerUsernameInput = document.getElementById("registerUsernameInput");
 const registerDisplayNameInput = document.getElementById("registerDisplayNameInput");
 const registerPasswordInput = document.getElementById("registerPasswordInput");
@@ -29,6 +28,16 @@ const messageForm = document.getElementById("messageForm");
 const searchInput = document.getElementById("searchInput");
 const chatHeader = document.getElementById("chatHeader");
 const chatList = document.getElementById("chatList");
+
+// Элементы модального окна группы
+const groupModal = document.getElementById("groupModal");
+const createGroupBtn = document.getElementById("createGroupBtn");
+const closeModalBtn = document.getElementById("closeModalBtn");
+const cancelGroupBtn = document.getElementById("cancelGroupBtn");
+const groupForm = document.getElementById("groupForm");
+const groupNameInput = document.getElementById("groupNameInput");
+const groupMembersInput = document.getElementById("groupMembersInput");
+const groupError = document.getElementById("groupError");
 
 let currentUser = null;
 let currentChatId = null;
@@ -338,6 +347,75 @@ async function createChat() {
 }
 
 
+// === Функции для работы с группами ===
+
+function showGroupModal() {
+    groupModal.classList.remove("hidden");
+    groupNameInput.value = "";
+    groupMembersInput.value = "";
+    groupError.textContent = "";
+}
+
+function hideGroupModal() {
+    groupModal.classList.add("hidden");
+}
+
+async function createGroup() {
+    const name = groupNameInput.value.trim();
+    const membersStr = groupMembersInput.value.trim();
+
+    if (name === "") {
+        groupError.textContent = "Введите название группы";
+        return;
+    }
+    if (membersStr === "") {
+        groupError.textContent = "Введите username участников через запятую";
+        return;
+    }
+
+    const usernames = membersStr.split(",").map(s => s.trim()).filter(s => s !== "");
+
+    if (usernames.length === 0) {
+        groupError.textContent = "Введите хотя бы одного участника";
+        return;
+    }
+
+    const usersResponse = await fetch("/api/users");
+    const allUsers = await usersResponse.json();
+    const userMap = {};
+    allUsers.forEach(u => userMap[u.username] = u.id);
+
+    const missing = usernames.filter(u => !(u in userMap));
+    if (missing.length > 0) {
+        groupError.textContent = `Пользователи не найдены: ${missing.join(", ")}`;
+        return;
+    }
+
+    const response = await fetch("/api/chats", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            user_id: currentUser.id,
+            name: name,
+            usernames: usernames
+        })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        groupError.textContent = data.error || "Ошибка создания группы";
+        return;
+    }
+
+    hideGroupModal();
+    currentChatId = data.id;
+    await loadChats();
+}
+
+
 function logout() {
     sessionStorage.removeItem("currentUser");
     currentUser = null;
@@ -400,6 +478,31 @@ logoutBtn.addEventListener("click", function () {
 
 createChatBtn.addEventListener("click", async function () {
     await createChat();
+});
+
+
+// Обработчики для модального окна группы
+createGroupBtn.addEventListener("click", function () {
+    showGroupModal();
+});
+
+closeModalBtn.addEventListener("click", function () {
+    hideGroupModal();
+});
+
+cancelGroupBtn.addEventListener("click", function () {
+    hideGroupModal();
+});
+
+window.addEventListener("click", function (event) {
+    if (event.target === groupModal) {
+        hideGroupModal();
+    }
+});
+
+groupForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    await createGroup();
 });
 
 

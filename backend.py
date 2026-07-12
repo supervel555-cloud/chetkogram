@@ -38,6 +38,7 @@ def init_db():
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS chats (
                     id SERIAL PRIMARY KEY,
+                    title TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
@@ -61,6 +62,7 @@ def init_db():
                 )
             """)
 
+            cursor.execute("ALTER TABLE chats ADD COLUMN IF NOT EXISTS title TEXT")
             conn.commit()
 
 
@@ -73,12 +75,26 @@ def create_direct_chat(cursor, user1_id, user2_id):
         "INSERT INTO chat_members (chat_id, user_id) VALUES (%s, %s)",
         (chat_id, user1_id)
     )
-
     cursor.execute(
         "INSERT INTO chat_members (chat_id, user_id) VALUES (%s, %s)",
         (chat_id, user2_id)
     )
+    return chat_id
 
+
+def create_group_chat(cursor, title, user_ids):
+    cursor.execute(
+        "INSERT INTO chats (title) VALUES (%s) RETURNING id",
+        (title,)
+    )
+    chat = cursor.fetchone()
+    chat_id = chat["id"]
+
+    for uid in user_ids:
+        cursor.execute(
+            "INSERT INTO chat_members (chat_id, user_id) VALUES (%s, %s)",
+            (chat_id, uid)
+        )
     return chat_id
 
 
@@ -125,6 +141,12 @@ def seed_db():
             chat_7 = create_direct_chat(cursor, velimir_id, study_id)
             chat_8 = create_direct_chat(cursor, velimir_id, python_id)
 
+            group_chat_id = create_group_chat(
+                cursor,
+                "Команда",
+                [kirill_id, velimir_id, boris_id]
+            )
+
             messages = [
                 (chat_1, velimir_id, "Привет, Кирилл"),
                 (chat_1, kirill_id, "Привет, Велимир"),
@@ -151,7 +173,11 @@ def seed_db():
                 (chat_7, velimir_id, "Хорошо"),
 
                 (chat_8, python_id, "Повтори функции и списки"),
-                (chat_8, velimir_id, "Окей")
+                (chat_8, velimir_id, "Окей"),
+
+                (group_chat_id, kirill_id, "Всем привет!"),
+                (group_chat_id, velimir_id, "Привет!"),
+                (group_chat_id, boris_id, "Здравствуйте!")
             ]
 
             cursor.executemany(
@@ -186,9 +212,7 @@ def get_users():
                 FROM users
                 ORDER BY id
             """)
-
             users = cursor.fetchall()
-
     return jsonify(users)
 
 
@@ -202,10 +226,8 @@ def register():
 
     if username == "":
         return jsonify({"error": "username is required"}), 400
-
     if display_name == "":
         return jsonify({"error": "display_name is required"}), 400
-
     if password == "":
         return jsonify({"error": "password is required"}), 400
 
@@ -222,10 +244,8 @@ def register():
                     """,
                     (username, display_name, password_hash)
                 )
-
                 user = cursor.fetchone()
                 conn.commit()
-
     except UniqueViolation:
         return jsonify({"error": "username already exists"}), 400
 
@@ -241,7 +261,6 @@ def login():
 
     if username == "":
         return jsonify({"error": "username is required"}), 400
-
     if password == "":
         return jsonify({"error": "password is required"}), 400
 
@@ -252,7 +271,6 @@ def login():
                 FROM users
                 WHERE username = %s
             """, (username,))
-
             user = cursor.fetchone()
 
     if user is None:
@@ -280,13 +298,16 @@ def get_chats():
             cursor.execute("""
                 SELECT
                     chats.id,
-                    (
-                        SELECT string_agg(users.display_name, ', ')
-                        FROM chat_members AS members2
-                        JOIN users ON users.id = members2.user_id
-                        WHERE members2.chat_id = chats.id
-                          AND members2.user_id != %s
-                    ) AS title,
+                    CASE
+                        WHEN chats.title IS NOT NULL THEN chats.title
+                        ELSE (
+                            SELECT string_agg(users.display_name, ', ')
+                            FROM chat_members AS members2
+                            JOIN users ON users.id = members2.user_id
+                            WHERE members2.chat_id = chats.id
+                              AND members2.user_id != %s
+                        )
+                    END AS title,
                     (
                         SELECT text
                         FROM messages
@@ -309,14 +330,40 @@ def get_chats():
 def create_chat():
     data = request.get_json()
 
+    name = data.get("name", "").strip()
+    usernames = data.get("usernames", [])
     user_id = data.get("user_id")
-    other_user_id = data.get("other_user_id")
 
     if user_id is None:
         return jsonify({"error": "user_id is required"}), 400
 
+    if name and usernames:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id, username FROM users WHERE username = ANY(%s)",
+                    (usernames,)
+                )
+                found_users = cursor.fetchall()
+                found_usernames = {u["username"] for u in found_users}
+                missing = set(usernames) - found_usernames
+                if missing:
+                    return jsonify({"error": f"Users not found: {', '.join(missing)}"}), 400
+
+                all_ids = {u["id"] for u in found_users}
+                all_ids.add(user_id)
+
+                if len(all_ids) < 2:
+                    return jsonify({"error": "Group must have at least 2 members"}), 400
+
+                chat_id = create_group_chat(cursor, name, list(all_ids))
+                conn.commit()
+
+        return jsonify({"id": chat_id}), 201
+
+    other_user_id = data.get("other_user_id")
     if other_user_id is None:
-        return jsonify({"error": "other_user_id is required"}), 400
+        return jsonify({"error": "other_user_id is required for direct chat"}), 400
 
     if user_id == other_user_id:
         return jsonify({"error": "cannot create chat with yourself"}), 400
@@ -336,7 +383,6 @@ def get_messages():
 
     if chat_id is None:
         return jsonify({"error": "chat_id is required"}), 400
-
     if user_id is None:
         return jsonify({"error": "user_id is required"}), 400
 
@@ -359,7 +405,6 @@ def get_messages():
                 WHERE messages.chat_id = %s
                 ORDER BY messages.id
             """, (user_id, chat_id))
-
             messages = cursor.fetchall()
 
     return jsonify(messages)
@@ -375,10 +420,8 @@ def create_message():
 
     if chat_id is None:
         return jsonify({"error": "chat_id is required"}), 400
-
     if user_id is None:
         return jsonify({"error": "user_id is required"}), 400
-
     if text == "":
         return jsonify({"error": "text is required"}), 400
 
@@ -392,7 +435,6 @@ def create_message():
                 """,
                 (chat_id, user_id, text)
             )
-
             message = cursor.fetchone()
             conn.commit()
 
@@ -401,7 +443,6 @@ def create_message():
 
 init_db()
 seed_db()
-
 
 if __name__ == "__main__":
     app.run(debug=True)
