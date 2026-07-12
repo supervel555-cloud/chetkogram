@@ -383,6 +383,29 @@ def create_chat():
     return jsonify({"id": chat_id}), 201
 
 
+@app.route("/api/chats/<int:chat_id>", methods=["DELETE"])
+def delete_chat(chat_id):
+    user_id = request.args.get("user_id", type=int)
+    if user_id is None:
+        return jsonify({"error": "user_id is required"}), 400
+
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            # Проверяем, что пользователь является участником чата
+            cursor.execute(
+                "SELECT 1 FROM chat_members WHERE chat_id = %s AND user_id = %s",
+                (chat_id, user_id)
+            )
+            if cursor.fetchone() is None:
+                return jsonify({"error": "You are not a member of this chat"}), 403
+
+            # Удаляем чат (каскадно удалятся все сообщения и записи участников)
+            cursor.execute("DELETE FROM chats WHERE id = %s", (chat_id,))
+            conn.commit()
+
+    return jsonify({"message": "Chat deleted"}), 200
+
+
 @app.route("/api/messages", methods=["GET"])
 def get_messages():
     chat_id = request.args.get("chat_id", type=int)

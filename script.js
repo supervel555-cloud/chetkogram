@@ -55,7 +55,6 @@ let currentChatId = null;
 let chats = [];
 
 // Храним последнее сообщение для каждого чата для отслеживания новых
-// Теперь будем хранить объект { text, sender_id }
 let lastMessageMap = {};
 
 // Разрешение на уведомления
@@ -114,9 +113,8 @@ function requestNotificationPermission() {
 
 // Показать уведомление (системное или внутреннее)
 function showNotification(text) {
-    if (!notificationsEnabled) return; // Если уведомления выключены – не показываем
+    if (!notificationsEnabled) return;
 
-    // Если есть системные уведомления и разрешение получено
     if (notificationPermission && "Notification" in window) {
         try {
             const notification = new Notification("📨 Chetkogram", {
@@ -158,7 +156,7 @@ function showNotification(text) {
     }, 5000);
 }
 
-// --- Остальные функции (вход, регистрация, чаты, сообщения) ---
+// --- Функции чатов и сообщений ---
 
 function showLoginForm() {
     loginForm.classList.remove("hidden");
@@ -229,6 +227,29 @@ async function register(username, displayName, password) {
     await loadChats();
 }
 
+// Удаление чата
+async function deleteChat(chatId) {
+    if (!confirm("Удалить этот чат?")) return;
+
+    try {
+        const response = await fetch(`/api/chats/${chatId}?user_id=${currentUser.id}`, {
+            method: "DELETE"
+        });
+        if (!response.ok) {
+            const data = await response.json();
+            alert(data.error || "Ошибка удаления чата");
+            return;
+        }
+        // Если удалён текущий чат, сбросим currentChatId
+        if (currentChatId === chatId) {
+            currentChatId = null;
+        }
+        await loadChats(); // обновляем список
+    } catch (e) {
+        alert("Ошибка сети");
+    }
+}
+
 async function loadChats() {
     if (!currentUser) return;
 
@@ -236,7 +257,6 @@ async function loadChats() {
     const response = await fetch(`/api/chats?user_id=${currentUser.id}`);
     const newChats = await response.json();
 
-    const oldChats = chats;
     chats = newChats;
 
     // Восстанавливаем lastMessageMap из sessionStorage, если есть
@@ -246,7 +266,6 @@ async function loadChats() {
         if (saved) savedMap = JSON.parse(saved);
     } catch (e) {}
 
-    // Если нет сохранённой карты, инициализируем текущими значениями
     if (!savedMap) {
         savedMap = {};
         chats.forEach(chat => {
@@ -256,7 +275,6 @@ async function loadChats() {
             };
         });
     } else {
-        // Проверяем, есть ли новые чаты, которых нет в сохранённой карте
         chats.forEach(chat => {
             if (!(chat.id in savedMap)) {
                 savedMap[chat.id] = {
@@ -267,27 +285,20 @@ async function loadChats() {
         });
     }
 
-    // Теперь сравниваем с предыдущим состоянием savedMap
-    // и показываем уведомления только если:
-    // 1) Текст изменился
-    // 2) Отправитель не текущий пользователь
-    // 3) Чат не активен
+    // Проверяем новые сообщения
     chats.forEach(chat => {
         const oldLast = savedMap[chat.id] || { text: null, sender_id: null };
         const newText = chat.last_message;
         const newSenderId = chat.last_sender_id;
 
         if (oldLast.text !== newText && newText !== null) {
-            // Уведомление только если отправитель не я и чат не активен
             if (newSenderId !== currentUser.id && chat.id !== currentChatId) {
                 showNotification(`Новое сообщение в чате "${chat.title}"`);
             }
-            // Обновляем сохранённое значение
             savedMap[chat.id] = { text: newText, sender_id: newSenderId };
         }
     });
 
-    // Сохраняем обновлённую карту в sessionStorage
     try {
         sessionStorage.setItem(`lastMessageMap_${currentUser.id}`, JSON.stringify(savedMap));
     } catch (e) {}
@@ -301,12 +312,24 @@ async function loadChats() {
         return;
     }
 
-    const oldChatStillExists = chats.some(chat => chat.id === oldChatId);
-    currentChatId = oldChatStillExists ? oldChatId : chats[0].id;
+    // Если текущий чат был удалён, выбираем первый
+    if (currentChatId !== null && !chats.some(chat => chat.id === currentChatId)) {
+        currentChatId = null;
+    }
+
+    if (currentChatId === null) {
+        currentChatId = chats[0].id;
+    }
+
     const currentChat = chats.find(chat => chat.id === currentChatId);
-    chatHeader.innerHTML = `<h3>${currentChat.title}</h3>`;
+    if (currentChat) {
+        chatHeader.innerHTML = `<h3>${currentChat.title}</h3>`;
+    } else {
+        chatHeader.innerHTML = "<h3>Выбери чат</h3>";
+    }
+
     renderChats();
-    await loadMessages();
+    if (currentChatId) await loadMessages();
 }
 
 function renderChats() {
@@ -321,16 +344,33 @@ function renderChats() {
         chatElement.classList.add("chat-item");
         if (chat.id === currentChatId) chatElement.classList.add("active");
 
+        // Блок с информацией о чате
+        const info = document.createElement("div");
+        info.className = "chat-info";
+
         const titleElement = document.createElement("div");
-        titleElement.classList.add("chat-name");
+        titleElement.className = "chat-name";
         titleElement.textContent = chat.title;
 
         const lastMessageElement = document.createElement("div");
-        lastMessageElement.classList.add("chat-last-message");
+        lastMessageElement.className = "chat-last-message";
         lastMessageElement.textContent = chat.last_message || "Нет сообщений";
 
-        chatElement.appendChild(titleElement);
-        chatElement.appendChild(lastMessageElement);
+        info.appendChild(titleElement);
+        info.appendChild(lastMessageElement);
+
+        // Кнопка удаления
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-chat-btn";
+        deleteBtn.textContent = "✕";
+        deleteBtn.title = "Удалить чат";
+        deleteBtn.addEventListener("click", function (e) {
+            e.stopPropagation(); // чтобы не открывать чат
+            deleteChat(chat.id);
+        });
+
+        chatElement.appendChild(info);
+        chatElement.appendChild(deleteBtn);
 
         chatElement.addEventListener("click", async function () {
             currentChatId = chat.id;
@@ -493,7 +533,6 @@ function closeSettings() {
 // === Выход ===
 function logout() {
     sessionStorage.removeItem("currentUser");
-    // Очищаем сохранённую карту сообщений для этого пользователя
     if (currentUser) {
         sessionStorage.removeItem(`lastMessageMap_${currentUser.id}`);
     }
@@ -589,7 +628,6 @@ async function startApp() {
     currentUser = savedUser;
     showMessenger();
 
-    // Если есть сохранённая карта сообщений для этого пользователя, загружаем её
     try {
         const saved = sessionStorage.getItem(`lastMessageMap_${currentUser.id}`);
         if (saved) lastMessageMap = JSON.parse(saved);
@@ -597,7 +635,6 @@ async function startApp() {
 
     await loadChats();
 
-    // Проверяем разрешение на уведомления при старте
     if ("Notification" in window && Notification.permission === "granted") {
         notificationPermission = true;
     }
