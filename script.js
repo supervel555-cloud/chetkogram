@@ -39,17 +39,14 @@ const groupNameInput = document.getElementById("groupNameInput");
 const groupMembersInput = document.getElementById("groupMembersInput");
 const groupError = document.getElementById("groupError");
 
-// Элементы настроек
-const settingsIcon = document.getElementById("settingsIcon");
-const settingsModal = document.getElementById("settingsModal");
-const closeSettingsBtn = document.getElementById("closeSettingsBtn");
-const notificationsToggle = document.getElementById("notificationsToggle");
-const notificationsStatus = document.getElementById("notificationsStatus");
-const requestNotificationBtn = document.getElementById("requestNotificationBtn");
-const settingsMessage = document.getElementById("settingsMessage");
-
 // Контейнер для уведомлений
 const notificationContainer = document.getElementById("notificationContainer");
+
+// Элементы настроек
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsMenu = document.getElementById("settingsMenu");
+const notificationsToggle = document.getElementById("notificationsToggle");
+const requestNotificationBtn = document.getElementById("requestNotificationBtn");
 
 let currentUser = null;
 let currentChatId = null;
@@ -60,86 +57,72 @@ let lastMessageMap = {};
 
 // Разрешение на уведомления (системное)
 let notificationPermission = false;
-let isFirstLoad = true; // флаг для первого запуска, чтобы не показывать уведомления о старых сообщениях
+// Включены ли уведомления (пользовательский переключатель)
+let notificationsEnabled = true;
+let isFirstLoad = true; // флаг для первого запуска
 
-// Настройки пользователя (сохраняем в localStorage)
-let userSettings = {
-    notificationsEnabled: true
-};
-
-// Загрузка настроек из localStorage
+// Загружаем настройки из localStorage
 function loadSettings() {
-    const saved = localStorage.getItem("chetkogram_settings");
+    const saved = localStorage.getItem("chekcogram_settings");
     if (saved) {
         try {
-            userSettings = JSON.parse(saved);
+            const settings = JSON.parse(saved);
+            notificationsEnabled = settings.notificationsEnabled !== undefined ? settings.notificationsEnabled : true;
         } catch (e) {}
     }
-    // Применяем к UI
-    notificationsToggle.checked = userSettings.notificationsEnabled !== false;
-    updateNotificationsStatus();
+    notificationsToggle.checked = notificationsEnabled;
 }
 
-// Сохранение настроек в localStorage
+// Сохраняем настройки в localStorage
 function saveSettings() {
-    localStorage.setItem("chetkogram_settings", JSON.stringify(userSettings));
+    const settings = {
+        notificationsEnabled: notificationsEnabled
+    };
+    localStorage.setItem("chekcogram_settings", JSON.stringify(settings));
 }
 
-// Обновление текста статуса уведомлений
-function updateNotificationsStatus() {
-    const enabled = userSettings.notificationsEnabled !== false;
-    notificationsStatus.textContent = enabled ? "Включены" : "Выключены";
-}
-
-// Запрос разрешения на уведомления (только по клику)
+// Запрос разрешения на уведомления (по клику)
 function requestNotificationPermission() {
     if (!("Notification" in window)) {
-        settingsMessage.textContent = "Ваш браузер не поддерживает уведомления";
+        alert("Ваш браузер не поддерживает уведомления");
         return;
     }
     if (Notification.permission === "granted") {
         notificationPermission = true;
-        settingsMessage.textContent = "Уведомления уже разрешены";
+        alert("Уведомления уже разрешены");
         return;
     }
     if (Notification.permission === "denied") {
-        settingsMessage.textContent = "Уведомления запрещены. Разрешите их в настройках браузера.";
+        alert("Уведомления запрещены. Пожалуйста, разрешите их в настройках браузера.");
         return;
     }
-    // Запрашиваем разрешение
     Notification.requestPermission().then(function(permission) {
         if (permission === "granted") {
             notificationPermission = true;
-            settingsMessage.textContent = "Уведомления включены!";
+            alert("Уведомления включены!");
         } else {
-            notificationPermission = false;
-            settingsMessage.textContent = "Разрешение не получено";
+            alert("Разрешение не получено");
         }
     });
 }
 
-// Показать уведомление (если разрешено в настройках и системно)
+// Показать уведомление (системное или внутреннее), если включены
 function showNotification(text) {
-    // Проверяем, включены ли уведомления в настройках пользователя
-    if (userSettings.notificationsEnabled === false) {
-        return;
+    if (!notificationsEnabled) {
+        return; // пользователь выключил уведомления
     }
-
     // Если есть системные уведомления и разрешение получено
     if (notificationPermission && "Notification" in window) {
         try {
             const notification = new Notification("📨 Chetkogram", {
                 body: text,
-                icon: "" // можно добавить иконку, если есть
+                icon: ""
             });
-            // Автоматическое закрытие через 3 секунды
             setTimeout(function() {
                 notification.close();
             }, 3000);
             return;
-        } catch (e) {
-            // Если что-то пошло не так, используем внутреннее уведомление
-        }
+        } catch (e) {}
     }
 
     // Внутреннее уведомление (запасной вариант)
@@ -161,7 +144,6 @@ function showNotification(text) {
     notification.appendChild(closeBtn);
     notificationContainer.appendChild(notification);
 
-    // Автоматическое исчезновение через 5 секунд
     setTimeout(function () {
         if (notification.parentNode) {
             notification.remove();
@@ -169,144 +151,118 @@ function showNotification(text) {
     }, 5000);
 }
 
+// Переключение меню настроек
+settingsBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    settingsMenu.classList.toggle("hidden");
+});
+
+// Закрытие меню при клике вне его
+document.addEventListener("click", function(e) {
+    if (!settingsMenu.contains(e.target) && e.target !== settingsBtn) {
+        settingsMenu.classList.add("hidden");
+    }
+});
+
+// Обработчик переключателя уведомлений
+notificationsToggle.addEventListener("change", function() {
+    notificationsEnabled = this.checked;
+    saveSettings();
+});
+
+// Кнопка запроса разрешения
+requestNotificationBtn.addEventListener("click", function() {
+    requestNotificationPermission();
+});
+
 
 function showLoginForm() {
     loginForm.classList.remove("hidden");
     registerForm.classList.add("hidden");
-
     showLoginBtn.classList.add("active");
     showRegisterBtn.classList.remove("active");
-
     authError.textContent = "";
 }
-
 
 function showRegisterForm() {
     registerForm.classList.remove("hidden");
     loginForm.classList.add("hidden");
-
     showRegisterBtn.classList.add("active");
     showLoginBtn.classList.remove("active");
-
     authError.textContent = "";
 }
-
 
 function saveCurrentUser(user) {
     currentUser = user;
     sessionStorage.setItem("currentUser", JSON.stringify(user));
 }
 
-
 function getSavedUser() {
     const savedUser = sessionStorage.getItem("currentUser");
-
-    if (savedUser === null) {
-        return null;
-    }
-
-    return JSON.parse(savedUser);
+    return savedUser ? JSON.parse(savedUser) : null;
 }
-
 
 function showMessenger() {
     authScreen.classList.add("hidden");
     app.classList.remove("hidden");
-
     currentUserName.textContent = currentUser.display_name;
-    // Загружаем настройки при показе мессенджера
-    loadSettings();
-    // Проверяем текущий статус разрешения
-    if ("Notification" in window) {
-        notificationPermission = (Notification.permission === "granted");
-    }
 }
-
 
 function showAuthScreen() {
     app.classList.add("hidden");
     authScreen.classList.remove("hidden");
 }
 
-
 async function login(username, password) {
     const response = await fetch("/api/login", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            username: username,
-            password: password
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
     });
-
     const data = await response.json();
-
     if (!response.ok) {
         authError.textContent = data.error || "Ошибка входа";
         return;
     }
-
     saveCurrentUser(data);
     showMessenger();
     await loadChats();
 }
-
 
 async function register(username, displayName, password) {
     const response = await fetch("/api/register", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            username: username,
-            display_name: displayName,
-            password: password
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, display_name: displayName, password })
     });
-
     const data = await response.json();
-
     if (!response.ok) {
         authError.textContent = data.error || "Ошибка регистрации";
         return;
     }
-
     saveCurrentUser(data);
     showMessenger();
     await loadChats();
 }
 
-
 async function loadChats() {
-    if (currentUser === null) {
-        return;
-    }
-
+    if (!currentUser) return;
     const oldChatId = currentChatId;
-
     const response = await fetch(`/api/chats?user_id=${currentUser.id}`);
     const newChats = await response.json();
-
     const oldChats = chats;
     chats = newChats;
 
-    // Если это первая загрузка (после входа), инициализируем lastMessageMap,
-    // чтобы не показывать уведомления о старых сообщениях.
     if (isFirstLoad) {
         chats.forEach(chat => {
             lastMessageMap[chat.id] = chat.last_message || null;
         });
         isFirstLoad = false;
     } else {
-        // Проверяем, появились ли новые сообщения в чатах
         chats.forEach(chat => {
             const oldLast = lastMessageMap[chat.id] || null;
             const newLast = chat.last_message;
             if (oldLast !== newLast && newLast !== null) {
-                // Если чат не текущий, показываем уведомление
                 if (chat.id !== currentChatId) {
                     showNotification(`Новое сообщение в чате "${chat.title}"`);
                 }
@@ -323,208 +279,99 @@ async function loadChats() {
         return;
     }
 
-    const oldChatStillExists = chats.some(function (chat) {
-        return chat.id === oldChatId;
-    });
-
-    if (oldChatStillExists) {
-        currentChatId = oldChatId;
-    } else {
-        currentChatId = chats[0].id;
-    }
-
-    const currentChat = chats.find(function (chat) {
-        return chat.id === currentChatId;
-    });
-
+    const oldChatStillExists = chats.some(chat => chat.id === oldChatId);
+    currentChatId = oldChatStillExists ? oldChatId : chats[0].id;
+    const currentChat = chats.find(chat => chat.id === currentChatId);
     chatHeader.innerHTML = `<h3>${currentChat.title}</h3>`;
-
     renderChats();
     await loadMessages();
 }
 
-
 function renderChats() {
     chatList.innerHTML = "";
-
     const searchText = searchInput.value.toLowerCase();
-
-    chats.forEach(function (chat) {
-        const chatName = chat.title.toLowerCase();
-
-        if (!chatName.includes(searchText)) {
-            return;
-        }
-
+    chats.forEach(chat => {
+        if (!chat.title.toLowerCase().includes(searchText)) return;
         const chatElement = document.createElement("div");
         chatElement.classList.add("chat-item");
-
-        if (chat.id === currentChatId) {
-            chatElement.classList.add("active");
-        }
-
+        if (chat.id === currentChatId) chatElement.classList.add("active");
         const titleElement = document.createElement("div");
         titleElement.classList.add("chat-name");
         titleElement.textContent = chat.title;
-
         const lastMessageElement = document.createElement("div");
         lastMessageElement.classList.add("chat-last-message");
         lastMessageElement.textContent = chat.last_message || "Нет сообщений";
-
         chatElement.appendChild(titleElement);
         chatElement.appendChild(lastMessageElement);
-
         chatElement.addEventListener("click", async function () {
             currentChatId = chat.id;
             chatHeader.innerHTML = `<h3>${chat.title}</h3>`;
-
             renderChats();
             await loadMessages();
         });
-
         chatList.appendChild(chatElement);
     });
 }
 
-
 async function loadMessages() {
-    if (currentChatId === null || currentUser === null) {
-        return;
-    }
-
+    if (!currentChatId || !currentUser) return;
     const response = await fetch(`/api/messages?chat_id=${currentChatId}&user_id=${currentUser.id}`);
     const chatMessages = await response.json();
-
     renderMessages(chatMessages);
 }
 
-
 function renderMessages(chatMessages) {
     messages.innerHTML = "";
-
-    chatMessages.forEach(function (message) {
+    chatMessages.forEach(msg => {
         const wrapper = document.createElement("div");
-        wrapper.classList.add("message-wrapper");
-
-        if (message.sender_type === "me") {
-            wrapper.classList.add("me");
-        } else {
-            wrapper.classList.add("other");
-        }
-
-        // Имя отправителя
+        wrapper.classList.add("message-wrapper", msg.sender_type === "me" ? "me" : "other");
         const sender = document.createElement("div");
         sender.classList.add("message-sender");
-        if (message.sender_type === "me") {
-            sender.textContent = "Вы";
-        } else {
-            sender.textContent = message.sender_name || "Неизвестный";
-        }
-
+        sender.textContent = msg.sender_type === "me" ? "Вы" : (msg.sender_name || "Неизвестный");
         const messageElement = document.createElement("div");
-        messageElement.classList.add("message");
-        if (message.sender_type === "me") {
-            messageElement.classList.add("me");
-        } else {
-            messageElement.classList.add("other");
-        }
-        messageElement.textContent = message.text;
-
+        messageElement.classList.add("message", msg.sender_type === "me" ? "me" : "other");
+        messageElement.textContent = msg.text;
         wrapper.appendChild(sender);
         wrapper.appendChild(messageElement);
         messages.appendChild(wrapper);
     });
-
     messages.scrollTop = messages.scrollHeight;
 }
 
-
 async function sendMessage() {
     const text = messageInput.value.trim();
-
-    if (text === "") {
-        return;
-    }
-
-    if (currentChatId === null || currentUser === null) {
-        return;
-    }
-
+    if (!text || !currentChatId || !currentUser) return;
     const savedChatId = currentChatId;
-
     await fetch("/api/messages", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            chat_id: savedChatId,
-            user_id: currentUser.id,
-            text: text
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: savedChatId, user_id: currentUser.id, text })
     });
-
     messageInput.value = "";
-
     currentChatId = savedChatId;
     await loadChats();
-
-    currentChatId = savedChatId;
     await loadMessages();
 }
 
-
 async function createChat() {
     const username = newChatUsernameInput.value.trim();
-
-    if (username === "") {
-        alert("Введи username собеседника");
-        return;
-    }
-
+    if (!username) { alert("Введи username собеседника"); return; }
     const usersResponse = await fetch("/api/users");
     const users = await usersResponse.json();
-
-    const otherUser = users.find(function (user) {
-        return user.username === username;
-    });
-
-    if (otherUser === undefined) {
-        alert("Пользователь не найден");
-        return;
-    }
-
-    if (otherUser.id === currentUser.id) {
-        alert("Нельзя создать чат с самим собой");
-        return;
-    }
-
+    const otherUser = users.find(u => u.username === username);
+    if (!otherUser) { alert("Пользователь не найден"); return; }
+    if (otherUser.id === currentUser.id) { alert("Нельзя создать чат с самим собой"); return; }
     const response = await fetch("/api/chats", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            user_id: currentUser.id,
-            other_user_id: otherUser.id
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: currentUser.id, other_user_id: otherUser.id })
     });
-
     const data = await response.json();
-
-    if (!response.ok) {
-        alert(data.error || "Ошибка создания чата");
-        return;
-    }
-
+    if (!response.ok) { alert(data.error || "Ошибка создания чата"); return; }
     newChatUsernameInput.value = "";
     currentChatId = data.id;
-
     await loadChats();
 }
-
-
-// === Функции для работы с группами ===
 
 function showGroupModal() {
     groupModal.classList.remove("hidden");
@@ -540,58 +387,27 @@ function hideGroupModal() {
 async function createGroup() {
     const name = groupNameInput.value.trim();
     const membersStr = groupMembersInput.value.trim();
-
-    if (name === "") {
-        groupError.textContent = "Введите название группы";
-        return;
-    }
-    if (membersStr === "") {
-        groupError.textContent = "Введите username участников через запятую";
-        return;
-    }
-
-    const usernames = membersStr.split(",").map(s => s.trim()).filter(s => s !== "");
-
-    if (usernames.length === 0) {
-        groupError.textContent = "Введите хотя бы одного участника";
-        return;
-    }
-
+    if (!name) { groupError.textContent = "Введите название группы"; return; }
+    if (!membersStr) { groupError.textContent = "Введите username участников через запятую"; return; }
+    const usernames = membersStr.split(",").map(s => s.trim()).filter(s => s);
+    if (usernames.length === 0) { groupError.textContent = "Введите хотя бы одного участника"; return; }
     const usersResponse = await fetch("/api/users");
     const allUsers = await usersResponse.json();
     const userMap = {};
     allUsers.forEach(u => userMap[u.username] = u.id);
-
     const missing = usernames.filter(u => !(u in userMap));
-    if (missing.length > 0) {
-        groupError.textContent = `Пользователи не найдены: ${missing.join(", ")}`;
-        return;
-    }
-
+    if (missing.length) { groupError.textContent = `Пользователи не найдены: ${missing.join(", ")}`; return; }
     const response = await fetch("/api/chats", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            user_id: currentUser.id,
-            name: name,
-            usernames: usernames
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: currentUser.id, name, usernames })
     });
-
     const data = await response.json();
-
-    if (!response.ok) {
-        groupError.textContent = data.error || "Ошибка создания группы";
-        return;
-    }
-
+    if (!response.ok) { groupError.textContent = data.error || "Ошибка создания группы"; return; }
     hideGroupModal();
     currentChatId = data.id;
     await loadChats();
 }
-
 
 function logout() {
     sessionStorage.removeItem("currentUser");
@@ -600,124 +416,60 @@ function logout() {
     chats = [];
     lastMessageMap = {};
     isFirstLoad = true;
-
     chatList.innerHTML = "";
     messages.innerHTML = "";
     chatHeader.innerHTML = "<h3>Выбери чат</h3>";
-
     showAuthScreen();
 }
 
-
-// === Обработчики настроек ===
-
-// Открыть модалку настроек
-settingsIcon.addEventListener("click", function() {
-    settingsModal.classList.remove("hidden");
-    settingsMessage.textContent = "";
-    // Обновляем статус разрешения
-    if ("Notification" in window) {
-        notificationPermission = (Notification.permission === "granted");
-    }
-});
-
-// Закрыть модалку настроек
-closeSettingsBtn.addEventListener("click", function() {
-    settingsModal.classList.add("hidden");
-});
-
-// Закрытие по клику вне окна
-window.addEventListener("click", function(event) {
-    if (event.target === settingsModal) {
-        settingsModal.classList.add("hidden");
-    }
-    if (event.target === groupModal) {
-        hideGroupModal();
-    }
-});
-
-// Переключатель уведомлений
-notificationsToggle.addEventListener("change", function() {
-    userSettings.notificationsEnabled = notificationsToggle.checked;
-    saveSettings();
-    updateNotificationsStatus();
-    settingsMessage.textContent = "Настройки сохранены";
-    setTimeout(() => { settingsMessage.textContent = ""; }, 2000);
-});
-
-// Кнопка запроса разрешения
-requestNotificationBtn.addEventListener("click", function() {
-    requestNotificationPermission();
-});
-
-
-// === Остальные обработчики событий ===
-
+// Обработчики событий
 showLoginBtn.addEventListener("click", showLoginForm);
 showRegisterBtn.addEventListener("click", showRegisterForm);
 
-loginForm.addEventListener("submit", async function (event) {
-    event.preventDefault();
+loginForm.addEventListener("submit", async function(e) {
+    e.preventDefault();
     const username = loginUsernameInput.value.trim();
     const password = loginPasswordInput.value.trim();
-    if (username === "" || password === "") {
-        authError.textContent = "Введи username и пароль";
-        return;
-    }
+    if (!username || !password) { authError.textContent = "Введи username и пароль"; return; }
     await login(username, password);
 });
 
-registerForm.addEventListener("submit", async function (event) {
-    event.preventDefault();
+registerForm.addEventListener("submit", async function(e) {
+    e.preventDefault();
     const username = registerUsernameInput.value.trim();
     const displayName = registerDisplayNameInput.value.trim();
     const password = registerPasswordInput.value.trim();
-    if (username === "" || displayName === "" || password === "") {
-        authError.textContent = "Заполни username, имя и пароль";
-        return;
-    }
+    if (!username || !displayName || !password) { authError.textContent = "Заполни все поля"; return; }
     await register(username, displayName, password);
 });
 
 logoutBtn.addEventListener("click", logout);
-
-createChatBtn.addEventListener("click", async function () {
-    await createChat();
-});
-
+createChatBtn.addEventListener("click", createChat);
 createGroupBtn.addEventListener("click", showGroupModal);
 closeModalBtn.addEventListener("click", hideGroupModal);
 cancelGroupBtn.addEventListener("click", hideGroupModal);
-
-groupForm.addEventListener("submit", async function (event) {
-    event.preventDefault();
-    await createGroup();
-});
-
-messageForm.addEventListener("submit", async function (event) {
-    event.preventDefault();
-    await sendMessage();
-});
-
+window.addEventListener("click", function(e) { if (e.target === groupModal) hideGroupModal(); });
+groupForm.addEventListener("submit", async function(e) { e.preventDefault(); await createGroup(); });
+messageForm.addEventListener("submit", async function(e) { e.preventDefault(); await sendMessage(); });
 searchInput.addEventListener("input", renderChats);
 
-
 async function startApp() {
+    loadSettings(); // загружаем настройки
     const savedUser = getSavedUser();
-    if (savedUser === null) {
-        showAuthScreen();
-        return;
-    }
+    if (!savedUser) { showAuthScreen(); return; }
     currentUser = savedUser;
     showMessenger();
     await loadChats();
+    // Проверяем, есть ли уже разрешение
+    if ("Notification" in window && Notification.permission === "granted") {
+        notificationPermission = true;
+    }
 }
 
 startApp();
 
-// Периодическая проверка новых сообщений
-setInterval(async function () {
-    if (currentUser !== null && currentChatId !== null) {
+setInterval(async function() {
+    if (currentUser && currentChatId !== null) {
         await loadChats();
     }
 }, 3000);
