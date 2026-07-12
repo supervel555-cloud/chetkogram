@@ -40,21 +40,6 @@
 
     <!-- Сам мессенджер -->
     <div class="app hidden" id="app">
-        <!-- Кнопка настроек в правом верхнем углу -->
-        <div class="settings-button-container">
-            <button id="settingsBtn" class="settings-btn">⚙️</button>
-            <!-- Выпадающее меню настроек -->
-            <div id="settingsMenu" class="settings-menu hidden">
-                <div class="settings-item">
-                    <label for="notificationsToggle">Уведомления</label>
-                    <input type="checkbox" id="notificationsToggle" />
-                </div>
-                <div class="settings-item">
-                    <button id="requestNotificationBtn">Запросить разрешение</button>
-                </div>
-            </div>
-        </div>
-
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="current-user">
@@ -62,7 +47,11 @@
                         <div class="current-user-label">Текущий аккаунт</div>
                         <div class="current-user-name" id="currentUserName">Пользователь</div>
                     </div>
-                    <button class="logout-btn" id="logoutBtn" type="button">Выйти</button>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="logout-btn" id="logoutBtn" type="button">Выйти</button>
+                        <!-- Кнопка настроек (шестерёнка) -->
+                        <button class="settings-btn" id="settingsBtn" type="button" title="Настройки">⚙️</button>
+                    </div>
                 </div>
 
                 <div class="create-chat-panel">
@@ -104,6 +93,28 @@
                 <button type="button" id="cancelGroupBtn">Отмена</button>
             </form>
             <p id="groupError" class="auth-error"></p>
+        </div>
+    </div>
+
+    <!-- Модальное окно настроек -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" id="closeSettingsBtn">&times;</span>
+            <h2>Настройки</h2>
+            <div style="display: flex; align-items: center; gap: 12px; margin-top: 16px;">
+                <label style="font-weight: bold;">Уведомления</label>
+                <label class="switch">
+                    <input type="checkbox" id="notificationsToggle" />
+                    <span class="slider round"></span>
+                </label>
+                <span id="notificationsStatus" style="font-size: 14px; color: #555;">Включены</span>
+            </div>
+            <p style="margin-top: 16px; font-size: 14px; color: #777;">
+                Системные уведомления отображаются на рабочем столе. Для их работы необходимо разрешение браузера.
+            </p>
+            <button id="requestPermissionBtn" type="button" style="margin-top: 12px; padding: 8px 16px; border: 2px solid #4a4fdd; border-radius: 8px; background: #4f8cff; color: white; cursor: pointer;">
+                Запросить разрешение
+            </button>
         </div>
     </div>
 
