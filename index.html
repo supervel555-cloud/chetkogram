@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chetcogram</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <!-- Экран входа и регистрации -->
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-card">
+            <h1>Chetcogram</h1>
+            <p class="auth-subtitle">Войди в аккаунт или зарегистрируйся</p>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="showLoginBtn" type="button">Вход</button>
+                <button class="auth-tab" id="showRegisterBtn" type="button">Регистрация</button>
+            </div>
+
+            <!-- Форма входа -->
+            <form class="auth-form" id="loginForm">
+                <input type="text" id="loginUsernameInput" placeholder="Username" autocomplete="username" />
+                <input type="password" id="loginPasswordInput" placeholder="Пароль" autocomplete="current-password" />
+                <button type="submit">Войти</button>
+            </form>
+
+            <!-- Форма регистрации -->
+            <form class="auth-form hidden" id="registerForm">
+                <input type="text" id="registerUsernameInput" placeholder="Username" autocomplete="username" />
+                <input type="text" id="registerDisplayNameInput" placeholder="Имя на экране" autocomplete="name" />
+                <input type="password" id="registerPasswordInput" placeholder="Пароль" autocomplete="new-password" />
+                <button type="submit">Зарегистрироваться</button>
+            </form>
+
+            <p class="auth-error" id="authError"></p>
+        </div>
+    </div>
+
+    <!-- Сам мессенджер -->
+    <div class="app hidden" id="app">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="current-user">
+                    <div>
+                        <div class="current-user-label">Текущий аккаунт</div>
+                        <div class="current-user-name" id="currentUserName">Пользователь</div>
+                    </div>
+
+                    <button class="logout-btn" id="logoutBtn" type="button">Выйти</button>
+                </div>
+
+                <div class="create-chat-panel">
+                    <input type="text" id="newChatUsernameInput" placeholder="username собеседника" />
+                    <button id="createChatBtn" type="button">Создать чат</button>
+                </div>
+
+                <h2>Чаты</h2>
+                <input type="text" id="searchInput" placeholder="поиск" class="search-input" />
+            </div>
+
+            <div class="chat-list" id="chatList"></div>
+        </aside>
+
+        <main class="chat-area">
+            <header class="chat-header" id="chatHeader">
+                <h3>Выбери чат</h3>
+            </header>
+
+            <section class="messages" id="messages"></section>
+
+            <form class="message-form" id="messageForm">
+                <input type="text" id="messageInput" placeholder="Введите сообщение..." autocomplete="off" />
+                <button type="submit">Отправить</button>
+            </form>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
