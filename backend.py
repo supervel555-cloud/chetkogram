@@ -314,7 +314,14 @@ def get_chats():
                         WHERE messages.chat_id = chats.id
                         ORDER BY messages.id DESC
                         LIMIT 1
-                    ) AS last_message
+                    ) AS last_message,
+                    (
+                        SELECT sender_id
+                        FROM messages
+                        WHERE messages.chat_id = chats.id
+                        ORDER BY messages.id DESC
+                        LIMIT 1
+                    ) AS last_sender_id
                 FROM chats
                 JOIN chat_members ON chat_members.chat_id = chats.id
                 WHERE chat_members.user_id = %s

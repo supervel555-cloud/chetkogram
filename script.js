@@ -55,6 +55,7 @@ let currentChatId = null;
 let chats = [];
 
 // Храним последнее сообщение для каждого чата для отслеживания новых
+// Теперь будем хранить объект { text, sender_id }
 let lastMessageMap = {};
 
 // Разрешение на уведомления
@@ -249,28 +250,40 @@ async function loadChats() {
     if (!savedMap) {
         savedMap = {};
         chats.forEach(chat => {
-            savedMap[chat.id] = chat.last_message || null;
+            savedMap[chat.id] = {
+                text: chat.last_message || null,
+                sender_id: chat.last_sender_id || null
+            };
         });
     } else {
         // Проверяем, есть ли новые чаты, которых нет в сохранённой карте
         chats.forEach(chat => {
             if (!(chat.id in savedMap)) {
-                savedMap[chat.id] = chat.last_message || null;
+                savedMap[chat.id] = {
+                    text: chat.last_message || null,
+                    sender_id: chat.last_sender_id || null
+                };
             }
         });
     }
 
-    // Теперь сравниваем с предыдущим состоянием lastMessageMap
-    // Но мы хотим показывать уведомления только если сообщение изменилось относительно savedMap
-    // и если чат не текущий.
+    // Теперь сравниваем с предыдущим состоянием savedMap
+    // и показываем уведомления только если:
+    // 1) Текст изменился
+    // 2) Отправитель не текущий пользователь
+    // 3) Чат не активен
     chats.forEach(chat => {
-        const oldLast = savedMap[chat.id] || null;
-        const newLast = chat.last_message;
-        if (oldLast !== newLast && newLast !== null) {
-            if (chat.id !== currentChatId) {
+        const oldLast = savedMap[chat.id] || { text: null, sender_id: null };
+        const newText = chat.last_message;
+        const newSenderId = chat.last_sender_id;
+
+        if (oldLast.text !== newText && newText !== null) {
+            // Уведомление только если отправитель не я и чат не активен
+            if (newSenderId !== currentUser.id && chat.id !== currentChatId) {
                 showNotification(`Новое сообщение в чате "${chat.title}"`);
             }
-            savedMap[chat.id] = newLast;
+            // Обновляем сохранённое значение
+            savedMap[chat.id] = { text: newText, sender_id: newSenderId };
         }
     });
 
@@ -480,12 +493,14 @@ function closeSettings() {
 // === Выход ===
 function logout() {
     sessionStorage.removeItem("currentUser");
+    // Очищаем сохранённую карту сообщений для этого пользователя
+    if (currentUser) {
+        sessionStorage.removeItem(`lastMessageMap_${currentUser.id}`);
+    }
     currentUser = null;
     currentChatId = null;
     chats = [];
     lastMessageMap = {};
-    // Очищаем сохранённую карту сообщений
-    sessionStorage.removeItem(`lastMessageMap_${currentUser ? currentUser.id : ''}`);
     chatList.innerHTML = "";
     messages.innerHTML = "";
     chatHeader.innerHTML = "<h3>Выбери чат</h3>";
