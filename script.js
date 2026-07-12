@@ -51,21 +51,34 @@ let lastMessageMap = {};
 
 // Разрешение на уведомления
 let notificationPermission = false;
+let isFirstLoad = true; // флаг для первого запуска, чтобы не показывать уведомления о старых сообщениях
 
-// Запрос разрешения на уведомления
+// Запрос разрешения на уведомления (только по клику)
 function requestNotificationPermission() {
     if (!("Notification" in window)) {
+        alert("Ваш браузер не поддерживает уведомления");
         return;
     }
     if (Notification.permission === "granted") {
         notificationPermission = true;
-    } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then(function(permission) {
-            if (permission === "granted") {
-                notificationPermission = true;
-            }
-        });
+        alert("Уведомления уже разрешены");
+        updateNotificationButton();
+        return;
     }
+    if (Notification.permission === "denied") {
+        alert("Уведомления запрещены. Пожалуйста, разрешите их в настройках браузера.");
+        return;
+    }
+    // Запрашиваем разрешение
+    Notification.requestPermission().then(function(permission) {
+        if (permission === "granted") {
+            notificationPermission = true;
+            alert("Уведомления включены!");
+            updateNotificationButton();
+        } else {
+            alert("Разрешение не получено");
+        }
+    });
 }
 
 // Показать уведомление (системное или внутреннее)
@@ -114,6 +127,42 @@ function showNotification(text) {
     }, 5000);
 }
 
+// Обновить отображение кнопки уведомлений (можно добавить в интерфейс)
+function updateNotificationButton() {
+    // У нас пока нет специального элемента, но мы можем создать его динамически
+    // Я добавлю кнопку в sidebar, если её нет
+    let btn = document.getElementById("notificationToggleBtn");
+    if (!btn) {
+        const panel = document.querySelector(".create-chat-panel");
+        if (panel) {
+            btn = document.createElement("button");
+            btn.id = "notificationToggleBtn";
+            btn.type = "button";
+            btn.style.marginLeft = "auto";
+            btn.style.padding = "4px 8px";
+            btn.style.fontSize = "12px";
+            btn.style.border = "2px solid #4a4fdd";
+            btn.style.borderRadius = "8px";
+            btn.style.background = "#e9f2ff";
+            btn.style.cursor = "pointer";
+            btn.addEventListener("click", requestNotificationPermission);
+            panel.appendChild(btn);
+        }
+    }
+    if (btn) {
+        if (notificationPermission) {
+            btn.textContent = "🔔 Уведомления включены";
+            btn.style.background = "#c8e6c9";
+        } else if (Notification && Notification.permission === "denied") {
+            btn.textContent = "🔕 Уведомления запрещены";
+            btn.style.background = "#ffcdd2";
+        } else {
+            btn.textContent = "🔔 Включить уведомления";
+            btn.style.background = "#e9f2ff";
+        }
+    }
+}
+
 
 function showLoginForm() {
     loginForm.classList.remove("hidden");
@@ -159,6 +208,8 @@ function showMessenger() {
     app.classList.remove("hidden");
 
     currentUserName.textContent = currentUser.display_name;
+    // Обновляем кнопку уведомлений при показе мессенджера
+    updateNotificationButton();
 }
 
 
@@ -229,22 +280,30 @@ async function loadChats() {
     const response = await fetch(`/api/chats?user_id=${currentUser.id}`);
     const newChats = await response.json();
 
-    // Проверяем, появились ли новые сообщения в чатах
     const oldChats = chats;
     chats = newChats;
 
-    // Для каждого чата проверяем, изменилось ли последнее сообщение
-    chats.forEach(chat => {
-        const oldLast = lastMessageMap[chat.id] || null;
-        const newLast = chat.last_message;
-        if (oldLast !== newLast && newLast !== null) {
-            // Если чат не текущий, показываем уведомление
-            if (chat.id !== currentChatId) {
-                showNotification(`Новое сообщение в чате "${chat.title}"`);
+    // Если это первая загрузка (после входа), инициализируем lastMessageMap,
+    // чтобы не показывать уведомления о старых сообщениях.
+    if (isFirstLoad) {
+        chats.forEach(chat => {
+            lastMessageMap[chat.id] = chat.last_message || null;
+        });
+        isFirstLoad = false;
+    } else {
+        // Проверяем, появились ли новые сообщения в чатах
+        chats.forEach(chat => {
+            const oldLast = lastMessageMap[chat.id] || null;
+            const newLast = chat.last_message;
+            if (oldLast !== newLast && newLast !== null) {
+                // Если чат не текущий, показываем уведомление
+                if (chat.id !== currentChatId) {
+                    showNotification(`Новое сообщение в чате "${chat.title}"`);
+                }
+                lastMessageMap[chat.id] = newLast;
             }
-            lastMessageMap[chat.id] = newLast;
-        }
-    });
+        });
+    }
 
     if (chats.length === 0) {
         currentChatId = null;
@@ -530,6 +589,7 @@ function logout() {
     currentChatId = null;
     chats = [];
     lastMessageMap = {};
+    isFirstLoad = true; // сбрасываем флаг для следующего входа
 
     chatList.innerHTML = "";
     messages.innerHTML = "";
@@ -539,69 +599,42 @@ function logout() {
 }
 
 
-showLoginBtn.addEventListener("click", function () {
-    showLoginForm();
-});
-
-
-showRegisterBtn.addEventListener("click", function () {
-    showRegisterForm();
-});
-
+// Обработчики событий
+showLoginBtn.addEventListener("click", showLoginForm);
+showRegisterBtn.addEventListener("click", showRegisterForm);
 
 loginForm.addEventListener("submit", async function (event) {
     event.preventDefault();
-
     const username = loginUsernameInput.value.trim();
     const password = loginPasswordInput.value.trim();
-
     if (username === "" || password === "") {
         authError.textContent = "Введи username и пароль";
         return;
     }
-
     await login(username, password);
 });
 
-
 registerForm.addEventListener("submit", async function (event) {
     event.preventDefault();
-
     const username = registerUsernameInput.value.trim();
     const displayName = registerDisplayNameInput.value.trim();
     const password = registerPasswordInput.value.trim();
-
     if (username === "" || displayName === "" || password === "") {
         authError.textContent = "Заполни username, имя и пароль";
         return;
     }
-
     await register(username, displayName, password);
 });
 
-
-logoutBtn.addEventListener("click", function () {
-    logout();
-});
-
+logoutBtn.addEventListener("click", logout);
 
 createChatBtn.addEventListener("click", async function () {
     await createChat();
 });
 
-
-// Обработчики для модального окна группы
-createGroupBtn.addEventListener("click", function () {
-    showGroupModal();
-});
-
-closeModalBtn.addEventListener("click", function () {
-    hideGroupModal();
-});
-
-cancelGroupBtn.addEventListener("click", function () {
-    hideGroupModal();
-});
+createGroupBtn.addEventListener("click", showGroupModal);
+closeModalBtn.addEventListener("click", hideGroupModal);
+cancelGroupBtn.addEventListener("click", hideGroupModal);
 
 window.addEventListener("click", function (event) {
     if (event.target === groupModal) {
@@ -614,38 +647,31 @@ groupForm.addEventListener("submit", async function (event) {
     await createGroup();
 });
 
-
 messageForm.addEventListener("submit", async function (event) {
     event.preventDefault();
     await sendMessage();
 });
 
-
-searchInput.addEventListener("input", function () {
-    renderChats();
-});
+searchInput.addEventListener("input", renderChats);
 
 
 async function startApp() {
     const savedUser = getSavedUser();
-
     if (savedUser === null) {
         showAuthScreen();
         return;
     }
-
     currentUser = savedUser;
     showMessenger();
     await loadChats();
 
-    // Запрос разрешения на уведомления после входа
-    requestNotificationPermission();
+    // После загрузки чатов, добавляем кнопку для уведомлений (если ещё нет)
+    updateNotificationButton();
 }
-
 
 startApp();
 
-
+// Периодическая проверка новых сообщений
 setInterval(async function () {
     if (currentUser !== null && currentChatId !== null) {
         await loadChats();
