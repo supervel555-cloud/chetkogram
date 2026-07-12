@@ -39,6 +39,15 @@ const groupNameInput = document.getElementById("groupNameInput");
 const groupMembersInput = document.getElementById("groupMembersInput");
 const groupError = document.getElementById("groupError");
 
+// Элементы настроек
+const settingsIcon = document.getElementById("settingsIcon");
+const settingsModal = document.getElementById("settingsModal");
+const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+const notificationsToggle = document.getElementById("notificationsToggle");
+const notificationsStatus = document.getElementById("notificationsStatus");
+const requestNotificationBtn = document.getElementById("requestNotificationBtn");
+const settingsMessage = document.getElementById("settingsMessage");
+
 // Контейнер для уведомлений
 const notificationContainer = document.getElementById("notificationContainer");
 
@@ -49,40 +58,73 @@ let chats = [];
 // Храним последнее сообщение для каждого чата для отслеживания новых
 let lastMessageMap = {};
 
-// Разрешение на уведомления
+// Разрешение на уведомления (системное)
 let notificationPermission = false;
 let isFirstLoad = true; // флаг для первого запуска, чтобы не показывать уведомления о старых сообщениях
+
+// Настройки пользователя (сохраняем в localStorage)
+let userSettings = {
+    notificationsEnabled: true
+};
+
+// Загрузка настроек из localStorage
+function loadSettings() {
+    const saved = localStorage.getItem("chetkogram_settings");
+    if (saved) {
+        try {
+            userSettings = JSON.parse(saved);
+        } catch (e) {}
+    }
+    // Применяем к UI
+    notificationsToggle.checked = userSettings.notificationsEnabled !== false;
+    updateNotificationsStatus();
+}
+
+// Сохранение настроек в localStorage
+function saveSettings() {
+    localStorage.setItem("chetkogram_settings", JSON.stringify(userSettings));
+}
+
+// Обновление текста статуса уведомлений
+function updateNotificationsStatus() {
+    const enabled = userSettings.notificationsEnabled !== false;
+    notificationsStatus.textContent = enabled ? "Включены" : "Выключены";
+}
 
 // Запрос разрешения на уведомления (только по клику)
 function requestNotificationPermission() {
     if (!("Notification" in window)) {
-        alert("Ваш браузер не поддерживает уведомления");
+        settingsMessage.textContent = "Ваш браузер не поддерживает уведомления";
         return;
     }
     if (Notification.permission === "granted") {
         notificationPermission = true;
-        alert("Уведомления уже разрешены");
-        updateNotificationButton();
+        settingsMessage.textContent = "Уведомления уже разрешены";
         return;
     }
     if (Notification.permission === "denied") {
-        alert("Уведомления запрещены. Пожалуйста, разрешите их в настройках браузера.");
+        settingsMessage.textContent = "Уведомления запрещены. Разрешите их в настройках браузера.";
         return;
     }
     // Запрашиваем разрешение
     Notification.requestPermission().then(function(permission) {
         if (permission === "granted") {
             notificationPermission = true;
-            alert("Уведомления включены!");
-            updateNotificationButton();
+            settingsMessage.textContent = "Уведомления включены!";
         } else {
-            alert("Разрешение не получено");
+            notificationPermission = false;
+            settingsMessage.textContent = "Разрешение не получено";
         }
     });
 }
 
-// Показать уведомление (системное или внутреннее)
+// Показать уведомление (если разрешено в настройках и системно)
 function showNotification(text) {
+    // Проверяем, включены ли уведомления в настройках пользователя
+    if (userSettings.notificationsEnabled === false) {
+        return;
+    }
+
     // Если есть системные уведомления и разрешение получено
     if (notificationPermission && "Notification" in window) {
         try {
@@ -125,42 +167,6 @@ function showNotification(text) {
             notification.remove();
         }
     }, 5000);
-}
-
-// Обновить отображение кнопки уведомлений (можно добавить в интерфейс)
-function updateNotificationButton() {
-    // У нас пока нет специального элемента, но мы можем создать его динамически
-    // Я добавлю кнопку в sidebar, если её нет
-    let btn = document.getElementById("notificationToggleBtn");
-    if (!btn) {
-        const panel = document.querySelector(".create-chat-panel");
-        if (panel) {
-            btn = document.createElement("button");
-            btn.id = "notificationToggleBtn";
-            btn.type = "button";
-            btn.style.marginLeft = "auto";
-            btn.style.padding = "4px 8px";
-            btn.style.fontSize = "12px";
-            btn.style.border = "2px solid #4a4fdd";
-            btn.style.borderRadius = "8px";
-            btn.style.background = "#e9f2ff";
-            btn.style.cursor = "pointer";
-            btn.addEventListener("click", requestNotificationPermission);
-            panel.appendChild(btn);
-        }
-    }
-    if (btn) {
-        if (notificationPermission) {
-            btn.textContent = "🔔 Уведомления включены";
-            btn.style.background = "#c8e6c9";
-        } else if (Notification && Notification.permission === "denied") {
-            btn.textContent = "🔕 Уведомления запрещены";
-            btn.style.background = "#ffcdd2";
-        } else {
-            btn.textContent = "🔔 Включить уведомления";
-            btn.style.background = "#e9f2ff";
-        }
-    }
 }
 
 
@@ -208,8 +214,12 @@ function showMessenger() {
     app.classList.remove("hidden");
 
     currentUserName.textContent = currentUser.display_name;
-    // Обновляем кнопку уведомлений при показе мессенджера
-    updateNotificationButton();
+    // Загружаем настройки при показе мессенджера
+    loadSettings();
+    // Проверяем текущий статус разрешения
+    if ("Notification" in window) {
+        notificationPermission = (Notification.permission === "granted");
+    }
 }
 
 
@@ -589,7 +599,7 @@ function logout() {
     currentChatId = null;
     chats = [];
     lastMessageMap = {};
-    isFirstLoad = true; // сбрасываем флаг для следующего входа
+    isFirstLoad = true;
 
     chatList.innerHTML = "";
     messages.innerHTML = "";
@@ -599,7 +609,50 @@ function logout() {
 }
 
 
-// Обработчики событий
+// === Обработчики настроек ===
+
+// Открыть модалку настроек
+settingsIcon.addEventListener("click", function() {
+    settingsModal.classList.remove("hidden");
+    settingsMessage.textContent = "";
+    // Обновляем статус разрешения
+    if ("Notification" in window) {
+        notificationPermission = (Notification.permission === "granted");
+    }
+});
+
+// Закрыть модалку настроек
+closeSettingsBtn.addEventListener("click", function() {
+    settingsModal.classList.add("hidden");
+});
+
+// Закрытие по клику вне окна
+window.addEventListener("click", function(event) {
+    if (event.target === settingsModal) {
+        settingsModal.classList.add("hidden");
+    }
+    if (event.target === groupModal) {
+        hideGroupModal();
+    }
+});
+
+// Переключатель уведомлений
+notificationsToggle.addEventListener("change", function() {
+    userSettings.notificationsEnabled = notificationsToggle.checked;
+    saveSettings();
+    updateNotificationsStatus();
+    settingsMessage.textContent = "Настройки сохранены";
+    setTimeout(() => { settingsMessage.textContent = ""; }, 2000);
+});
+
+// Кнопка запроса разрешения
+requestNotificationBtn.addEventListener("click", function() {
+    requestNotificationPermission();
+});
+
+
+// === Остальные обработчики событий ===
+
 showLoginBtn.addEventListener("click", showLoginForm);
 showRegisterBtn.addEventListener("click", showRegisterForm);
 
@@ -636,12 +689,6 @@ createGroupBtn.addEventListener("click", showGroupModal);
 closeModalBtn.addEventListener("click", hideGroupModal);
 cancelGroupBtn.addEventListener("click", hideGroupModal);
 
-window.addEventListener("click", function (event) {
-    if (event.target === groupModal) {
-        hideGroupModal();
-    }
-});
-
 groupForm.addEventListener("submit", async function (event) {
     event.preventDefault();
     await createGroup();
@@ -664,9 +711,6 @@ async function startApp() {
     currentUser = savedUser;
     showMessenger();
     await loadChats();
-
-    // После загрузки чатов, добавляем кнопку для уведомлений (если ещё нет)
-    updateNotificationButton();
 }
 
 startApp();

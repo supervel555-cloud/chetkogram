@@ -40,6 +40,11 @@
 
     <!-- Сам мессенджер -->
     <div class="app hidden" id="app">
+        <!-- Кнопка настроек в правом верхнем углу -->
+        <div class="settings-icon" id="settingsIcon" title="Настройки">
+            ⚙️
+        </div>
+
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="current-user">
@@ -89,6 +94,23 @@
                 <button type="button" id="cancelGroupBtn">Отмена</button>
             </form>
             <p id="groupError" class="auth-error"></p>
+        </div>
+    </div>
+
+    <!-- Модальное окно настроек -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" id="closeSettingsBtn">&times;</span>
+            <h2>Настройки</h2>
+            <div class="settings-item">
+                <label for="notificationsToggle">🔔 Уведомления</label>
+                <input type="checkbox" id="notificationsToggle" />
+                <span id="notificationsStatus">Включены</span>
+            </div>
+            <div class="settings-item">
+                <button id="requestNotificationBtn" type="button">Запросить разрешение на уведомления</button>
+            </div>
+            <p id="settingsMessage" class="auth-error"></p>
         </div>
     </div>
 
