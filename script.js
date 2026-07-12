@@ -49,6 +49,71 @@ let chats = [];
 // Храним последнее сообщение для каждого чата для отслеживания новых
 let lastMessageMap = {};
 
+// Разрешение на уведомления
+let notificationPermission = false;
+
+// Запрос разрешения на уведомления
+function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+        return;
+    }
+    if (Notification.permission === "granted") {
+        notificationPermission = true;
+    } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(function(permission) {
+            if (permission === "granted") {
+                notificationPermission = true;
+            }
+        });
+    }
+}
+
+// Показать уведомление (системное или внутреннее)
+function showNotification(text) {
+    // Если есть системные уведомления и разрешение получено
+    if (notificationPermission && "Notification" in window) {
+        try {
+            const notification = new Notification("📨 Chetkogram", {
+                body: text,
+                icon: "" // можно добавить иконку, если есть
+            });
+            // Автоматическое закрытие через 3 секунды
+            setTimeout(function() {
+                notification.close();
+            }, 3000);
+            return;
+        } catch (e) {
+            // Если что-то пошло не так, используем внутреннее уведомление
+        }
+    }
+
+    // Внутреннее уведомление (запасной вариант)
+    const notification = document.createElement("div");
+    notification.className = "notification";
+
+    const content = document.createElement("div");
+    content.className = "notification-content";
+    content.innerHTML = `<strong>📨 Chetkogram</strong> ${text}`;
+
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "notification-close";
+    closeBtn.textContent = "×";
+    closeBtn.addEventListener("click", function () {
+        notification.remove();
+    });
+
+    notification.appendChild(content);
+    notification.appendChild(closeBtn);
+    notificationContainer.appendChild(notification);
+
+    // Автоматическое исчезновение через 5 секунд
+    setTimeout(function () {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
 
 function showLoginForm() {
     loginForm.classList.remove("hidden");
@@ -165,49 +230,10 @@ async function loadChats() {
     const newChats = await response.json();
 
     // Проверяем, появились ли новые сообщения в чатах
-    // Сравниваем с предыдущим состоянием chats
     const oldChats = chats;
     chats = newChats;
 
     // Для каждого чата проверяем, изменилось ли последнее сообщение
-    chats.forEach(chat => {
-        const oldChat = oldChats.find(c => c.id === chat.id);
-        const oldLast = oldChat ? oldChat.last_message : null;
-        const newLast = chat.last_message;
-
-        // Если появилось новое сообщение и оно не от текущего пользователя (мы это проверим позже)
-        if (oldLast !== newLast && newLast !== null) {
-            // Сохраняем, что для этого чата есть новое сообщение, но покажем уведомление только если чат не активен
-            // Для определения отправителя нужно загрузить сообщения, но мы можем просто показать уведомление без имени
-            // Или загрузить последнее сообщение отдельно. Упростим: покажем уведомление с именем чата.
-            // Но лучше показать имя отправителя, для этого загрузим сообщения этого чата.
-            // Однако это может вызвать много запросов. Вместо этого мы можем при загрузке чатов получать и последнего отправителя.
-            // Изменим backend, чтобы возвращал sender_name для последнего сообщения.
-            // Но чтобы не менять backend, сделаем проще: при получении списка чатов мы не знаем отправителя.
-            // Можно показывать просто "Новое сообщение в чате {title}".
-            // Но пользователь просил "вам пришло новое сообщение в chetkogram".
-            // Сделаем так: если чат не активен, показываем уведомление с названием чата.
-            // Если активен, не показываем.
-            // Также можно проверять, кто отправил, но для этого нужно загрузить сообщения.
-            // Я добавлю небольшой костыль: при получении списка чатов мы также можем получить последнее сообщение с отправителем, но это усложнит.
-            // Лучше сделаем отдельный запрос для получения последнего сообщения с отправителем, но это много запросов.
-            // Альтернатива: при отправке сообщения мы уже знаем, кто отправил, и можем сохранить в lastMessageMap.
-            // Но это не сработает для чужих сообщений.
-            // Самый простой путь: показывать уведомление с именем чата и текстом "Новое сообщение".
-            // Я добавлю в backend поле sender_name для последнего сообщения в GET /api/chats.
-            // Изменим backend, чтобы возвращал last_sender_name.
-        }
-    });
-
-    // Для упрощения я изменю backend, чтобы он возвращал также имя отправителя последнего сообщения.
-    // Но поскольку я не хочу менять backend (пользователь просил только frontend), я сделаю костыль:
-    // при загрузке чатов будем проверять, изменилось ли last_message, и если изменилось, то загружаем сообщения этого чата,
-    // чтобы узнать отправителя. Но это может быть затратно.
-    // Вместо этого я добавлю простое уведомление с текстом "Новое сообщение в Chetkogram".
-    // Это соответствует просьбе пользователя: "вам пришло новое сообщение в chetkogram".
-    // Так и сделаем.
-
-    // Обновляем lastMessageMap
     chats.forEach(chat => {
         const oldLast = lastMessageMap[chat.id] || null;
         const newLast = chat.last_message;
@@ -498,36 +524,6 @@ async function createGroup() {
 }
 
 
-// === Уведомления ===
-
-function showNotification(text) {
-    const notification = document.createElement("div");
-    notification.className = "notification";
-
-    const content = document.createElement("div");
-    content.className = "notification-content";
-    content.innerHTML = `<strong>📨 Chetkogram</strong> ${text}`;
-
-    const closeBtn = document.createElement("button");
-    closeBtn.className = "notification-close";
-    closeBtn.textContent = "×";
-    closeBtn.addEventListener("click", function () {
-        notification.remove();
-    });
-
-    notification.appendChild(content);
-    notification.appendChild(closeBtn);
-    notificationContainer.appendChild(notification);
-
-    // Автоматическое исчезновение через 5 секунд
-    setTimeout(function () {
-        if (notification.parentNode) {
-            notification.remove();
-        }
-    }, 5000);
-}
-
-
 function logout() {
     sessionStorage.removeItem("currentUser");
     currentUser = null;
@@ -641,6 +637,9 @@ async function startApp() {
     currentUser = savedUser;
     showMessenger();
     await loadChats();
+
+    // Запрос разрешения на уведомления после входа
+    requestNotificationPermission();
 }
 
 
