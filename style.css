@@ -7,7 +7,7 @@
 body {
     height: 100vh;
     font-family: Arial, sans-serif;
-    background: #fef9e7; /* бледно-жёлтый фон */
+    background: #fef5d5; /* бледно-жёлтый фон */
     overflow: hidden;
 }
 
@@ -19,7 +19,7 @@ body {
 .auth-screen {
     width: 100vw;
     height: 100vh;
-    background: #fef9e7; /* тот же бледно-жёлтый */
+    background: #fef5d5; /* тот же бледно-жёлтый */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -107,13 +107,13 @@ body {
 .app {
     display: flex;
     height: 100vh;
-    background: #fef9e7; /* бледно-жёлтый */
+    background: #fef5d5; /* бледно-жёлтый */
 }
 
 /* Левая панель */
 .sidebar {
     width: 320px;
-    background: #fffdf5; /* почти белый с лёгким жёлтым оттенком */
+    background: #fef5d5; /* почти белый с лёгким жёлтым оттенком */
     border-right: 3px solid #f1c40f;
     display: flex;
     flex-direction: column;
