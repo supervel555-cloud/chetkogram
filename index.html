@@ -49,7 +49,6 @@
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <button class="logout-btn" id="logoutBtn" type="button">Выйти</button>
-                        <!-- Кнопка настроек (шестерёнка) -->
                         <button class="settings-btn" id="settingsBtn" type="button" title="Настройки">⚙️</button>
                     </div>
                 </div>
@@ -76,6 +75,7 @@
 
             <form class="message-form" id="messageForm">
                 <input type="text" id="messageInput" placeholder="Введите сообщение..." autocomplete="off" />
+                <button type="button" id="stickerBtn" class="sticker-btn" title="Стикеры">😊</button>
                 <button type="submit">Отправить</button>
             </form>
         </main>
@@ -116,6 +116,15 @@
                 Запросить разрешение
             </button>
         </div>
+    </div>
+
+    <!-- Панель стикеров -->
+    <div id="stickerPanel" class="sticker-panel hidden">
+        <div class="sticker-panel-header">
+            <span>Выберите стикер</span>
+            <button id="closeStickerBtn" class="close-sticker-btn">✕</button>
+        </div>
+        <div class="sticker-grid" id="stickerGrid"></div>
     </div>
 
     <!-- Блок уведомлений -->

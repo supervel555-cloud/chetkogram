@@ -47,6 +47,12 @@ const notificationsToggle = document.getElementById("notificationsToggle");
 const notificationsStatus = document.getElementById("notificationsStatus");
 const requestPermissionBtn = document.getElementById("requestPermissionBtn");
 
+// Элементы стикеров
+const stickerBtn = document.getElementById("stickerBtn");
+const stickerPanel = document.getElementById("stickerPanel");
+const closeStickerBtn = document.getElementById("closeStickerBtn");
+const stickerGrid = document.getElementById("stickerGrid");
+
 // Контейнер для уведомлений
 const notificationContainer = document.getElementById("notificationContainer");
 
@@ -240,11 +246,10 @@ async function deleteChat(chatId) {
             alert(data.error || "Ошибка удаления чата");
             return;
         }
-        // Если удалён текущий чат, сбросим currentChatId
         if (currentChatId === chatId) {
             currentChatId = null;
         }
-        await loadChats(); // обновляем список
+        await loadChats();
     } catch (e) {
         alert("Ошибка сети");
     }
@@ -259,7 +264,6 @@ async function loadChats() {
 
     chats = newChats;
 
-    // Восстанавливаем lastMessageMap из sessionStorage, если есть
     let savedMap = null;
     try {
         const saved = sessionStorage.getItem(`lastMessageMap_${currentUser.id}`);
@@ -285,7 +289,6 @@ async function loadChats() {
         });
     }
 
-    // Проверяем новые сообщения
     chats.forEach(chat => {
         const oldLast = savedMap[chat.id] || { text: null, sender_id: null };
         const newText = chat.last_message;
@@ -312,7 +315,6 @@ async function loadChats() {
         return;
     }
 
-    // Если текущий чат был удалён, выбираем первый
     if (currentChatId !== null && !chats.some(chat => chat.id === currentChatId)) {
         currentChatId = null;
     }
@@ -344,7 +346,6 @@ function renderChats() {
         chatElement.classList.add("chat-item");
         if (chat.id === currentChatId) chatElement.classList.add("active");
 
-        // Блок с информацией о чате
         const info = document.createElement("div");
         info.className = "chat-info";
 
@@ -359,13 +360,12 @@ function renderChats() {
         info.appendChild(titleElement);
         info.appendChild(lastMessageElement);
 
-        // Кнопка удаления
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "delete-chat-btn";
         deleteBtn.textContent = "✕";
         deleteBtn.title = "Удалить чат";
         deleteBtn.addEventListener("click", function (e) {
-            e.stopPropagation(); // чтобы не открывать чат
+            e.stopPropagation();
             deleteChat(chat.id);
         });
 
@@ -404,9 +404,21 @@ function renderMessages(chatMessages) {
 
         const messageElement = document.createElement("div");
         messageElement.classList.add("message");
-        if (message.sender_type === "me") messageElement.classList.add("me");
-        else messageElement.classList.add("other");
-        messageElement.textContent = message.text;
+
+        // Проверяем, является ли сообщение стикером (один эмодзи)
+        const text = message.text.trim();
+        const emojiRegex = /^[\u{1F600}-\u{1F6FF}\u{1F300}-\u{1F5FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE0F}\u{20E3}\u{0023}\u{002A}\u{0030}-\u{0039}\u{1F1E6}-\u{1F1FF}]+$/u;
+        // также учтём простые эмодзи без вариаций
+        const isSticker = text.match(emojiRegex) && text.length <= 4; // простой эмодзи или комбинация
+
+        if (isSticker) {
+            messageElement.classList.add("sticker");
+            messageElement.textContent = text;
+        } else {
+            if (message.sender_type === "me") messageElement.classList.add("me");
+            else messageElement.classList.add("other");
+            messageElement.textContent = text;
+        }
 
         wrapper.appendChild(sender);
         wrapper.appendChild(messageElement);
@@ -415,17 +427,14 @@ function renderMessages(chatMessages) {
     messages.scrollTop = messages.scrollHeight;
 }
 
-async function sendMessage() {
-    const text = messageInput.value.trim();
+async function sendMessage(text) {
     if (!text || !currentChatId || !currentUser) return;
-
     const savedChatId = currentChatId;
     await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: savedChatId, user_id: currentUser.id, text })
     });
-
     messageInput.value = "";
     currentChatId = savedChatId;
     await loadChats();
@@ -521,6 +530,54 @@ async function createGroup() {
     await loadChats();
 }
 
+// === Стикеры ===
+let stickers = [];
+
+async function loadStickers() {
+    try {
+        const response = await fetch("/api/stickers");
+        if (response.ok) {
+            stickers = await response.json();
+        } else {
+            stickers = [];
+        }
+    } catch (e) {
+        stickers = [];
+    }
+    renderStickers();
+}
+
+function renderStickers() {
+    stickerGrid.innerHTML = "";
+    stickers.forEach(sticker => {
+        const item = document.createElement("div");
+        item.className = "sticker-item";
+        item.textContent = sticker.emoji;
+        item.title = sticker.name || "";
+        item.addEventListener("click", function () {
+            sendSticker(sticker.emoji);
+        });
+        stickerGrid.appendChild(item);
+    });
+}
+
+function sendSticker(emoji) {
+    if (!currentChatId || !currentUser) {
+        alert("Сначала выберите чат");
+        return;
+    }
+    sendMessage(emoji);
+    closeStickerPanel();
+}
+
+function openStickerPanel() {
+    stickerPanel.classList.remove("hidden");
+}
+
+function closeStickerPanel() {
+    stickerPanel.classList.add("hidden");
+}
+
 // === Настройки ===
 function openSettings() {
     settingsModal.classList.remove("hidden");
@@ -584,6 +641,8 @@ cancelGroupBtn.addEventListener("click", hideGroupModal);
 window.addEventListener("click", function (event) {
     if (event.target === groupModal) hideGroupModal();
     if (event.target === settingsModal) closeSettings();
+    // Закрываем панель стикеров при клике вне её
+    if (event.target === stickerPanel) closeStickerPanel();
 });
 
 groupForm.addEventListener("submit", async function (event) {
@@ -593,7 +652,10 @@ groupForm.addEventListener("submit", async function (event) {
 
 messageForm.addEventListener("submit", async function (event) {
     event.preventDefault();
-    await sendMessage();
+    const text = messageInput.value.trim();
+    if (text) {
+        await sendMessage(text);
+    }
 });
 
 searchInput.addEventListener("input", renderChats);
@@ -613,6 +675,19 @@ notificationsToggle.addEventListener("change", function () {
 requestPermissionBtn.addEventListener("click", function () {
     requestNotificationPermission();
 });
+
+// Стикеры
+stickerBtn.addEventListener("click", function () {
+    if (stickerPanel.classList.contains("hidden")) {
+        openStickerPanel();
+    } else {
+        closeStickerPanel();
+    }
+});
+closeStickerBtn.addEventListener("click", closeStickerPanel);
+
+// Загрузка стикеров при старте
+loadStickers();
 
 // Загрузка настроек
 loadSettings();

@@ -62,6 +62,15 @@ def init_db():
                 )
             """)
 
+            # Таблица стикеров
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS stickers (
+                    id SERIAL PRIMARY KEY,
+                    emoji TEXT NOT NULL UNIQUE,
+                    name TEXT
+                )
+            """)
+
             cursor.execute("ALTER TABLE chats ADD COLUMN IF NOT EXISTS title TEXT")
             conn.commit()
 
@@ -98,6 +107,33 @@ def create_group_chat(cursor, title, user_ids):
     return chat_id
 
 
+def seed_stickers(cursor):
+    # Проверяем, есть ли уже стикеры
+    cursor.execute("SELECT COUNT(*) AS count FROM stickers")
+    count = cursor.fetchone()["count"]
+    if count > 0:
+        return
+
+    stickers = [
+        ("😀", "Улыбка"),
+        ("😂", "Смех"),
+        ("😍", "Влюблённость"),
+        ("🤔", "Задумчивость"),
+        ("😎", "Круто"),
+        ("🔥", "Огонь"),
+        ("🎉", "Праздник"),
+        ("❤️", "Любовь"),
+        ("👍", "Одобрение"),
+        ("👋", "Привет"),
+        ("🤗", "Объятие"),
+        ("😊", "Радость"),
+    ]
+    cursor.executemany(
+        "INSERT INTO stickers (emoji, name) VALUES (%s, %s)",
+        stickers
+    )
+
+
 def seed_db():
     with get_connection() as conn:
         with conn.cursor() as cursor:
@@ -105,6 +141,8 @@ def seed_db():
             users_count = cursor.fetchone()["count"]
 
             if users_count > 0:
+                seed_stickers(cursor)
+                conn.commit()
                 return
 
             users = [
@@ -184,6 +222,9 @@ def seed_db():
                 "INSERT INTO messages (chat_id, sender_id, text) VALUES (%s, %s, %s)",
                 messages
             )
+
+            # Добавляем стикеры
+            seed_stickers(cursor)
 
             conn.commit()
 
@@ -284,6 +325,15 @@ def login():
         "username": user["username"],
         "display_name": user["display_name"]
     })
+
+
+@app.route("/api/stickers", methods=["GET"])
+def get_stickers():
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id, emoji, name FROM stickers ORDER BY id")
+            stickers = cursor.fetchall()
+    return jsonify(stickers)
 
 
 @app.route("/api/chats", methods=["GET"])
@@ -391,7 +441,6 @@ def delete_chat(chat_id):
 
     with get_connection() as conn:
         with conn.cursor() as cursor:
-            # Проверяем, что пользователь является участником чата
             cursor.execute(
                 "SELECT 1 FROM chat_members WHERE chat_id = %s AND user_id = %s",
                 (chat_id, user_id)
@@ -399,7 +448,6 @@ def delete_chat(chat_id):
             if cursor.fetchone() is None:
                 return jsonify({"error": "You are not a member of this chat"}), 403
 
-            # Удаляем чат (каскадно удалятся все сообщения и записи участников)
             cursor.execute("DELETE FROM chats WHERE id = %s", (chat_id,))
             conn.commit()
 
