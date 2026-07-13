@@ -62,7 +62,6 @@ def init_db():
                 )
             """)
 
-            # Таблица стикеров
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS stickers (
                     id SERIAL PRIMARY KEY,
@@ -108,7 +107,6 @@ def create_group_chat(cursor, title, user_ids):
 
 
 def seed_stickers(cursor):
-    # Проверяем, есть ли уже стикеры
     cursor.execute("SELECT COUNT(*) AS count FROM stickers")
     count = cursor.fetchone()["count"]
     if count > 0:
@@ -223,9 +221,7 @@ def seed_db():
                 messages
             )
 
-            # Добавляем стикеры
             seed_stickers(cursor)
-
             conn.commit()
 
 

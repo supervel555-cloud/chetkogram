@@ -67,6 +67,9 @@ let lastMessageMap = {};
 let notificationPermission = false;
 let notificationsEnabled = true; // по умолчанию включены
 
+// Список стикеров (эмодзи)
+let stickerEmojis = [];
+
 // Загружаем настройки из localStorage
 function loadSettings() {
     const saved = localStorage.getItem("chetkogram_settings");
@@ -403,18 +406,16 @@ function renderMessages(chatMessages) {
         sender.textContent = message.sender_type === "me" ? "Вы" : (message.sender_name || "Неизвестный");
 
         const messageElement = document.createElement("div");
-        messageElement.classList.add("message");
-
-        // Проверяем, является ли сообщение стикером (один эмодзи)
         const text = message.text.trim();
-        const emojiRegex = /^[\u{1F600}-\u{1F6FF}\u{1F300}-\u{1F5FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE0F}\u{20E3}\u{0023}\u{002A}\u{0030}-\u{0039}\u{1F1E6}-\u{1F1FF}]+$/u;
-        // также учтём простые эмодзи без вариаций
-        const isSticker = text.match(emojiRegex) && text.length <= 4; // простой эмодзи или комбинация
+
+        // Проверяем, является ли сообщение стикером (по списку загруженных эмодзи)
+        const isSticker = stickerEmojis.includes(text);
 
         if (isSticker) {
-            messageElement.classList.add("sticker");
+            messageElement.classList.add("message", "sticker");
             messageElement.textContent = text;
         } else {
+            messageElement.classList.add("message");
             if (message.sender_type === "me") messageElement.classList.add("me");
             else messageElement.classList.add("other");
             messageElement.textContent = text;
@@ -531,23 +532,22 @@ async function createGroup() {
 }
 
 // === Стикеры ===
-let stickers = [];
-
 async function loadStickers() {
     try {
         const response = await fetch("/api/stickers");
         if (response.ok) {
-            stickers = await response.json();
+            const stickers = await response.json();
+            stickerEmojis = stickers.map(s => s.emoji);
+            renderStickers(stickers);
         } else {
-            stickers = [];
+            stickerEmojis = [];
         }
     } catch (e) {
-        stickers = [];
+        stickerEmojis = [];
     }
-    renderStickers();
 }
 
-function renderStickers() {
+function renderStickers(stickers) {
     stickerGrid.innerHTML = "";
     stickers.forEach(sticker => {
         const item = document.createElement("div");
@@ -641,7 +641,6 @@ cancelGroupBtn.addEventListener("click", hideGroupModal);
 window.addEventListener("click", function (event) {
     if (event.target === groupModal) hideGroupModal();
     if (event.target === settingsModal) closeSettings();
-    // Закрываем панель стикеров при клике вне её
     if (event.target === stickerPanel) closeStickerPanel();
 });
 

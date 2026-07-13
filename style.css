@@ -7,7 +7,7 @@
 body {
     height: 100vh;
     font-family: Arial, sans-serif;
-    background: #f3f4f6;
+    background: #fef9e7;
     overflow: hidden;
 }
 
@@ -20,7 +20,7 @@ body {
 .auth-screen {
     width: 100vw;
     height: 100vh;
-    background: rgb(101, 132, 255);
+    background: #f1c40f;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -29,7 +29,7 @@ body {
 .auth-card {
     width: 380px;
     background: white;
-    border: 3px solid #4a4fdd;
+    border: 3px solid #f39c12;
     border-radius: 16px;
     padding: 24px;
 }
@@ -54,14 +54,14 @@ body {
 .auth-tab {
     flex: 1;
     padding: 10px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 10px;
     background: white;
     cursor: pointer;
 }
 
 .auth-tab.active {
-    background: #4f8cff;
+    background: #f1c40f;
     color: white;
 }
 
@@ -73,22 +73,22 @@ body {
 
 .auth-form input {
     padding: 12px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 10px;
     outline: none;
 }
 
 .auth-form button {
     padding: 12px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 10px;
-    background: #4f8cff;
+    background: #f1c40f;
     color: white;
     cursor: pointer;
 }
 
 .auth-form button:hover {
-    background: #3f7ae0;
+    background: #e67e22;
 }
 
 .auth-error {
@@ -103,7 +103,7 @@ body {
 .app {
     display: flex;
     height: 100vh;
-    background: #f3f4f6;
+    background: #fef9e7;
 }
 
 /* Левая панель */
@@ -111,14 +111,14 @@ body {
 .sidebar {
     width: 320px;
     background: #ffffff;
-    border-right: 3px solid #4a4fdd;
+    border-right: 3px solid #f39c12;
     display: flex;
     flex-direction: column;
 }
 
 .sidebar-header {
     padding: 16px;
-    border-bottom: 3px solid #4a4fdd;
+    border-bottom: 3px solid #f39c12;
 }
 
 .sidebar-header h2 {
@@ -134,9 +134,9 @@ body {
     gap: 8px;
     margin-bottom: 14px;
     padding: 10px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 10px;
-    background: #f1f5ff;
+    background: #fef9e7;
 }
 
 .current-user-label {
@@ -151,20 +151,19 @@ body {
 
 .logout-btn {
     padding: 8px 10px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 8px;
     background: white;
     cursor: pointer;
 }
 
 .logout-btn:hover {
-    background: #e9f2ff;
+    background: #fef9e7;
 }
 
-/* Кнопка настроек */
 .settings-btn {
     padding: 8px 10px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 8px;
     background: white;
     cursor: pointer;
@@ -173,7 +172,7 @@ body {
     transition: background 0.2s;
 }
 .settings-btn:hover {
-    background: #e9f2ff;
+    background: #fef9e7;
 }
 
 /* Создание чата и группы */
@@ -189,23 +188,23 @@ body {
     flex: 1;
     min-width: 100px;
     padding: 9px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 8px;
     outline: none;
 }
 
 .create-chat-panel button {
     padding: 9px 10px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 8px;
-    background: #4f8cff;
+    background: #f1c40f;
     color: white;
     cursor: pointer;
     white-space: nowrap;
 }
 
 .create-chat-panel button:hover {
-    background: #3f7ae0;
+    background: #e67e22;
 }
 
 /* Поиск */
@@ -213,13 +212,13 @@ body {
 .search-input {
     width: 100%;
     padding: 10px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 10px;
     outline: none;
 }
 
 .search-input:focus {
-    border-color: #2228c9;
+    border-color: #d4ac0d;
 }
 
 /* Список чатов */
@@ -236,7 +235,7 @@ body {
     align-items: center;
     padding: 12px;
     margin-bottom: 10px;
-    border: 3px solid #4a4fdd;
+    border: 3px solid #f39c12;
     border-radius: 10px;
     cursor: pointer;
     background: #ffffff;
@@ -244,12 +243,12 @@ body {
 }
 
 .chat-item:hover {
-    background: #f1f5ff;
+    background: #fef9e7;
 }
 
 .chat-item.active {
-    background: #e9f2ff;
-    border-color: #2228c9;
+    background: #fef9e7;
+    border-color: #d4ac0d;
 }
 
 .chat-info {
@@ -271,7 +270,6 @@ body {
     white-space: nowrap;
 }
 
-/* Кнопка удаления чата */
 .delete-chat-btn {
     background: transparent;
     border: none;
@@ -309,7 +307,7 @@ body {
 .chat-header {
     padding: 16px;
     background: #ffffff;
-    border-bottom: 3px solid #4a4fdd;
+    border-bottom: 3px solid #f39c12;
 }
 
 .chat-header h3 {
@@ -355,55 +353,56 @@ body {
 }
 
 .message-wrapper.me .message-sender {
-    color: #b3c9ff;
+    color: #f39c12;
 }
 
 .message {
-    padding: 12px 14px;
-    border: 3px solid #4a4fdd;
+    padding: 10px 14px;
+    border: 2px solid #f39c12;
     border-radius: 14px;
     word-wrap: break-word;
     overflow-wrap: anywhere;
     word-break: break-word;
     white-space: pre-wrap;
     line-height: 1.4;
+    font-size: 15px; /* обычный размер */
 }
 
 .message.me {
-    background: #4f8cff;
-    color: white;
+    background: #f1c40f;
+    color: #333;
     border-bottom-right-radius: 4px;
 }
 
 .message.other {
-    background: #e5e7eb;
+    background: #fef9e7;
     color: #111827;
     border-bottom-left-radius: 4px;
 }
 
 /* Стикер в сообщении */
 .message.sticker {
-    font-size: 48px;
+    font-size: 40px;
     line-height: 1.2;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: 14px;
     background: transparent;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     text-align: center;
-    min-width: 70px;
-    min-height: 70px;
+    min-width: 60px;
+    min-height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .message-wrapper.me .message.sticker {
-    background: #4f8cff;
-    border-color: #4a4fdd;
+    background: #f1c40f;
+    border-color: #e67e22;
 }
 .message-wrapper.other .message.sticker {
-    background: #e5e7eb;
-    border-color: #4a4fdd;
+    background: #fef9e7;
+    border-color: #f39c12;
 }
 
 /* Форма отправки */
@@ -413,7 +412,7 @@ body {
     gap: 10px;
     padding: 16px;
     background: #ffffff;
-    border-top: 3px solid #4a4fdd;
+    border-top: 3px solid #f39c12;
     align-items: center;
 }
 
@@ -421,20 +420,20 @@ body {
     flex: 1;
     min-width: 0;
     padding: 12px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 10px;
     outline: none;
     font-size: 14px;
 }
 
 .message-form input:focus {
-    border-color: #2228c9;
+    border-color: #d4ac0d;
 }
 
 .message-form button {
     padding: 12px 18px;
-    border: 2px solid #4a4fdd;
-    background: #4f8cff;
+    border: 2px solid #f39c12;
+    background: #f1c40f;
     color: white;
     border-radius: 10px;
     cursor: pointer;
@@ -442,14 +441,13 @@ body {
 }
 
 .message-form button:hover {
-    background: #3f7ae0;
+    background: #e67e22;
 }
 
-/* Кнопка стикеров */
 .sticker-btn {
     padding: 10px 12px;
-    border: 2px solid #4a4fdd;
-    background: #f1f5ff;
+    border: 2px solid #f39c12;
+    background: #fef9e7;
     border-radius: 10px;
     cursor: pointer;
     font-size: 20px;
@@ -457,7 +455,7 @@ body {
     transition: background 0.2s;
 }
 .sticker-btn:hover {
-    background: #e9f2ff;
+    background: #fdebd0;
 }
 
 /* Панель стикеров */
@@ -466,7 +464,7 @@ body {
     bottom: 80px;
     right: 20px;
     background: white;
-    border: 3px solid #4a4fdd;
+    border: 3px solid #f39c12;
     border-radius: 16px;
     padding: 12px;
     z-index: 1500;
@@ -508,11 +506,11 @@ body {
     border-radius: 10px;
     cursor: pointer;
     transition: 0.2s;
-    background: #f9f9f9;
+    background: #fef9e7;
 }
 .sticker-item:hover {
-    border-color: #4a4fdd;
-    background: #e9f2ff;
+    border-color: #f39c12;
+    background: #fdebd0;
 }
 
 /* Модальные окна */
@@ -534,7 +532,7 @@ body {
     background: white;
     padding: 30px;
     border-radius: 16px;
-    border: 3px solid #4a4fdd;
+    border: 3px solid #f39c12;
     width: 400px;
     max-width: 90%;
     position: relative;
@@ -566,31 +564,31 @@ body {
 
 #groupForm input {
     padding: 10px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 8px;
     outline: none;
 }
 
 #groupForm button {
     padding: 10px;
-    border: 2px solid #4a4fdd;
+    border: 2px solid #f39c12;
     border-radius: 8px;
-    background: #4f8cff;
+    background: #f1c40f;
     color: white;
     cursor: pointer;
 }
 
 #groupForm button:hover {
-    background: #3f7ae0;
+    background: #e67e22;
 }
 
 #groupForm button[type="button"] {
-    background: #e5e7eb;
+    background: #fef9e7;
     color: #111;
 }
 
 #groupForm button[type="button"]:hover {
-    background: #d1d5db;
+    background: #fdebd0;
 }
 
 #groupError {
@@ -638,7 +636,7 @@ body {
 }
 
 input:checked + .slider {
-    background-color: #4f8cff;
+    background-color: #f1c40f;
 }
 
 input:checked + .slider:before {
