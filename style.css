@@ -113,7 +113,7 @@ body {
 /* Левая панель */
 .sidebar {
     width: 320px;
-    background: #fef5d5; /* почти белый с лёгким жёлтым оттенком */
+    background: #fffffe; /* почти белый с лёгким жёлтым оттенком */
     border-right: 3px solid #f1c40f;
     display: flex;
     flex-direction: column;
