@@ -7,7 +7,7 @@
 body {
     height: 100vh;
     font-family: Arial, sans-serif;
-    background: #fef9e7; /* бледно-жёлтый фон */
+    background: #fef9e7;
     overflow: hidden;
 }
 
@@ -111,10 +111,10 @@ body {
     background: #fef9e7;
 }
 
-/* Левая панель */
+/* Левая панель – бледно-жёлтая */
 .sidebar {
     width: 320px;
-    background: white; /* белая панель */
+    background: #fef9e7; /* теперь бледно-жёлтая */
     border-right: 3px solid #f1c40f;
     display: flex;
     flex-direction: column;
@@ -123,7 +123,7 @@ body {
 .sidebar-header {
     padding: 16px;
     border-bottom: 3px solid #f1c40f;
-    background: white;
+    background: #fef9e7; /* тоже бледно-жёлтый */
 }
 
 .sidebar-header h2 {
@@ -131,7 +131,7 @@ body {
     color: #000;
 }
 
-/* Текущий пользователь */
+/* Текущий пользователь – белый блок */
 .current-user {
     display: flex;
     justify-content: space-between;
@@ -141,7 +141,7 @@ body {
     padding: 10px;
     border: 2px solid #f1c40f;
     border-radius: 10px;
-    background: white; /* белый фон */
+    background: white;
 }
 
 .current-user-label {
@@ -174,12 +174,13 @@ body {
     line-height: 1;
 }
 
-/* Создание чата и группы */
+/* Создание чата – блок белый */
 .create-chat-panel {
     display: flex;
     gap: 8px;
     margin-bottom: 14px;
     flex-wrap: wrap;
+    background: transparent; /* прозрачный, так как фон уже бледно-жёлтый */
 }
 
 .create-chat-panel input {
@@ -208,7 +209,7 @@ body {
     background: #e6c531;
 }
 
-/* Поиск */
+/* Поиск – белый блок */
 .search-input {
     width: 100%;
     padding: 10px;
@@ -216,21 +217,22 @@ body {
     border-radius: 10px;
     outline: none;
     color: #000;
-    background: white; /* белый фон */
+    background: white;
 }
 
 .search-input:focus {
     border-color: #d4a017;
 }
 
-/* Список чатов */
+/* Список чатов – белый фон под списком */
 .chat-list {
     flex: 1;
     overflow-y: auto;
     padding: 10px;
-    background: white; /* белый фон под списком */
+    background: white; /* белый фон */
 }
 
+/* Каждый чат – белый */
 .chat-item {
     display: flex;
     justify-content: space-between;
@@ -240,12 +242,12 @@ body {
     border: 3px solid #f1c40f;
     border-radius: 10px;
     cursor: pointer;
-    background: white; /* белый фон каждого чата */
+    background: white;
     transition: 0.2s;
 }
 
 .chat-item:hover {
-    background: #fef5d5; /* лёгкий жёлтый при наведении */
+    background: #fef5d5;
 }
 
 .chat-item.active {
@@ -297,18 +299,19 @@ body {
     visibility: visible;
 }
 
-/* Правая часть */
+/* Правая часть – бледно-жёлтая */
 .chat-area {
     flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 0;
-    background: #fef9e7; /* бледно-жёлтый фон */
+    background: #fef9e7;
 }
 
+/* Верхний заголовок – бледно-жёлтый */
 .chat-header {
     padding: 16px;
-    background: white; /* белый фон заголовка */
+    background: #fef9e7; /* бледно-жёлтый */
     border-bottom: 3px solid #f1c40f;
 }
 
@@ -317,7 +320,7 @@ body {
     color: #000;
 }
 
-/* Сообщения */
+/* Сообщения – бледно-жёлтый фон */
 .messages {
     flex: 1;
     padding: 20px;
@@ -327,7 +330,7 @@ body {
     flex-direction: column;
     gap: 10px;
     min-width: 0;
-    background: #fef9e7; /* бледно-жёлтый фон */
+    background: #fef9e7;
 }
 
 .message-wrapper {
@@ -372,12 +375,12 @@ body {
 }
 
 .message.me {
-    background: #f1c40f; /* свои сообщения – насыщенный жёлтый */
+    background: #f1c40f;
     border-bottom-right-radius: 4px;
 }
 
 .message.other {
-    background: #fef5d5; /* чужие – бледный */
+    background: #fef5d5;
     border-bottom-left-radius: 4px;
 }
 
@@ -405,12 +408,12 @@ body {
     border-color: #f1c40f;
 }
 
-/* Форма отправки */
+/* Форма отправки – белая */
 .message-form {
     display: flex;
     gap: 10px;
     padding: 16px;
-    background: white; /* белый фон */
+    background: white;
     border-top: 3px solid #f1c40f;
     align-items: center;
 }
