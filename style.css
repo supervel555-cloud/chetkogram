@@ -614,7 +614,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: #fef5d5;
     transition: .4s;
     border-radius: 26px;
 }
@@ -632,7 +632,7 @@ body {
 }
 
 input:checked + .slider {
-    background-color: #f1c40f;
+    background-color: #fef5d5;
 }
 
 input:checked + .slider:before {
@@ -653,7 +653,7 @@ input:checked + .slider:before {
 
 .notification {
     background: #4d3b06;
-    color: #fef9e7;
+    color: #fef5d5;
     padding: 14px 18px;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
@@ -684,7 +684,7 @@ input:checked + .slider:before {
     padding: 0 4px;
 }
 .notification-close:hover {
-    color: #fff;
+    color: #fef5d5;
 }
 
 @keyframes slideIn {
