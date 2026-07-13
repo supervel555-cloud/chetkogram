@@ -298,12 +298,12 @@ body {
     display: flex;
     flex-direction: column;
     min-width: 0;
-    background: #fef9e7; /* бледно-жёлтый */
+    background: #fef5d5; /* бледно-жёлтый */
 }
 
 .chat-header {
     padding: 16px;
-    background: #fffdf5;
+    background: #fef5d5;
     border-bottom: 3px solid #f1c40f;
 }
 
@@ -322,7 +322,7 @@ body {
     flex-direction: column;
     gap: 10px;
     min-width: 0;
-    background: #fef9e7; /* бледно-жёлтый */
+    background: #fef5d5; /* бледно-жёлтый */
 }
 
 .message-wrapper {
@@ -405,7 +405,7 @@ body {
     display: flex;
     gap: 10px;
     padding: 16px;
-    background: #fffdf5;
+    background: #fef5d5;
     border-top: 3px solid #f1c40f;
     align-items: center;
 }
@@ -678,7 +678,7 @@ input:checked + .slider:before {
 .notification-close {
     background: transparent;
     border: none;
-    color: #aaa;
+    color: #fef5d5;
     font-size: 20px;
     cursor: pointer;
     padding: 0 4px;
