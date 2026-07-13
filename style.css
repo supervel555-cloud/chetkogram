@@ -107,13 +107,13 @@ body {
 .app {
     display: flex;
     height: 100vh;
-    background: #fef5d5; /* бледно-жёлтый */
+    background: #ffffff; /* бледно-жёлтый */
 }
 
 /* Левая панель */
 .sidebar {
     width: 320px;
-    background: #fffffe; /* почти белый с лёгким жёлтым оттенком */
+    background: #fef5d5; /* почти белый с лёгким жёлтым оттенком */
     border-right: 3px solid #f1c40f;
     display: flex;
     flex-direction: column;
