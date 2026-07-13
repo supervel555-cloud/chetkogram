@@ -11,11 +11,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 BASE_DIR = Path(__file__).resolve().parent
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/chetkogram"
-)
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/chetkogram")
 
+# Railway дает строку 'postgres://', а psycopg требует 'postgresql://'
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)   
+    
 app = Flask(__name__, static_folder=str(BASE_DIR))
 app.json.ensure_ascii = False
 
