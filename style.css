@@ -1,3 +1,5 @@
+/* Добавлено в конец файла, но я приведу весь файл целиком с изменениями */
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -131,6 +133,24 @@ body {
     color: #000;
 }
 
+/* Блок онлайна */
+.online-status {
+    background: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 2px solid #f1c40f;
+    font-size: 14px;
+    color: #333;
+    text-align: center;
+    margin-bottom: 12px;
+    display: inline-block;
+    width: 100%;
+}
+.online-status span {
+    font-weight: bold;
+    color: #27ae60;
+}
+
 /* Текущий пользователь – белый блок */
 .current-user {
     display: flex;
@@ -229,7 +249,7 @@ body {
     flex: 1;
     overflow-y: auto;
     padding: 10px;
-    background: #fef9e7; /* изменено */
+    background: #fef9e7;
 }
 
 /* Каждый чат – белый */
@@ -264,6 +284,9 @@ body {
     font-weight: bold;
     margin-bottom: 6px;
     color: #000;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .chat-last-message {
@@ -272,6 +295,19 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Статус онлайн (зелёный кружок) */
+.online-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #aaa;
+    flex-shrink: 0;
+}
+.online-indicator.online {
+    background: #27ae60;
 }
 
 .delete-chat-btn {
@@ -318,6 +354,13 @@ body {
 .chat-header h3 {
     font-size: 20px;
     color: #000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.chat-header .online-indicator {
+    width: 12px;
+    height: 12px;
 }
 
 /* Сообщения – бледно-жёлтый фон */
@@ -413,7 +456,7 @@ body {
     display: flex;
     gap: 10px;
     padding: 16px;
-    background: #fef9e7; /* изменено */
+    background: #fef9e7;
     border-top: 3px solid #f1c40f;
     align-items: center;
 }

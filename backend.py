@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timedelta
 
 from flask import Flask, request, jsonify, send_from_directory
 import psycopg
@@ -23,6 +24,19 @@ def get_connection():
     return psycopg.connect(DATABASE_URL, row_factory=dict_row)
 
 
+def update_user_activity(user_id):
+    """Обновляет время последней активности пользователя"""
+    if not user_id:
+        return
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "UPDATE users SET last_activity = CURRENT_TIMESTAMP WHERE id = %s",
+                (user_id,)
+            )
+            conn.commit()
+
+
 def init_db():
     with get_connection() as conn:
         with conn.cursor() as cursor:
@@ -31,7 +45,9 @@ def init_db():
                     id SERIAL PRIMARY KEY,
                     username TEXT NOT NULL UNIQUE,
                     display_name TEXT NOT NULL,
-                    password_hash TEXT NOT NULL
+                    password_hash TEXT NOT NULL,
+                    color TEXT DEFAULT '#000000',
+                    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
 
@@ -71,6 +87,8 @@ def init_db():
             """)
 
             cursor.execute("ALTER TABLE chats ADD COLUMN IF NOT EXISTS title TEXT")
+            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS color TEXT DEFAULT '#000000'")
+            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
             conn.commit()
 
 
@@ -144,18 +162,18 @@ def seed_db():
                 return
 
             users = [
-                ("kirill", "Кирилл", generate_password_hash("1234")),
-                ("velimir", "Велимир", generate_password_hash("1234")),
-                ("boris", "Борис", generate_password_hash("1234")),
-                ("dima", "Дима", generate_password_hash("1234")),
-                ("alina", "Алина", generate_password_hash("1234")),
-                ("work", "Рабочий чат", generate_password_hash("1234")),
-                ("study", "Учебный чат", generate_password_hash("1234")),
-                ("python", "Python", generate_password_hash("1234"))
+                ("kirill", "Кирилл", generate_password_hash("1234"), "#ff6b6b"),
+                ("velimir", "Велимир", generate_password_hash("1234"), "#4ecdc4"),
+                ("boris", "Борис", generate_password_hash("1234"), "#ffe66d"),
+                ("dima", "Дима", generate_password_hash("1234"), "#a8e6cf"),
+                ("alina", "Алина", generate_password_hash("1234"), "#ff9ff3"),
+                ("work", "Рабочий чат", generate_password_hash("1234"), "#54a0ff"),
+                ("study", "Учебный чат", generate_password_hash("1234"), "#5f27cd"),
+                ("python", "Python", generate_password_hash("1234"), "#ff9f43")
             ]
 
             cursor.executemany(
-                "INSERT INTO users (username, display_name, password_hash) VALUES (%s, %s, %s)",
+                "INSERT INTO users (username, display_name, password_hash, color) VALUES (%s, %s, %s, %s)",
                 users
             )
 
@@ -245,12 +263,26 @@ def get_users():
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT id, username, display_name
+                SELECT id, username, display_name, color,
+                       (EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - last_activity)) < 30) AS online
                 FROM users
                 ORDER BY id
             """)
             users = cursor.fetchall()
     return jsonify(users)
+
+
+@app.route("/api/online_count", methods=["GET"])
+def get_online_count():
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT COUNT(*) AS online_count
+                FROM users
+                WHERE EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - last_activity)) < 30
+            """)
+            result = cursor.fetchone()
+    return jsonify({"online_count": result["online_count"]})
 
 
 @app.route("/api/register", methods=["POST"])
@@ -269,17 +301,18 @@ def register():
         return jsonify({"error": "password is required"}), 400
 
     password_hash = generate_password_hash(password)
+    default_color = "#000000"
 
     try:
         with get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO users (username, display_name, password_hash)
-                    VALUES (%s, %s, %s)
-                    RETURNING id, username, display_name
+                    INSERT INTO users (username, display_name, password_hash, color, last_activity)
+                    VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+                    RETURNING id, username, display_name, color
                     """,
-                    (username, display_name, password_hash)
+                    (username, display_name, password_hash, default_color)
                 )
                 user = cursor.fetchone()
                 conn.commit()
@@ -304,7 +337,7 @@ def login():
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT id, username, display_name, password_hash
+                SELECT id, username, display_name, password_hash, color
                 FROM users
                 WHERE username = %s
             """, (username,))
@@ -316,10 +349,14 @@ def login():
     if not check_password_hash(user["password_hash"], password):
         return jsonify({"error": "Wrong password"}), 401
 
+    # Обновляем активность
+    update_user_activity(user["id"])
+
     return jsonify({
         "id": user["id"],
         "username": user["username"],
-        "display_name": user["display_name"]
+        "display_name": user["display_name"],
+        "color": user["color"]
     })
 
 
@@ -338,6 +375,9 @@ def get_chats():
 
     if user_id is None:
         return jsonify({"error": "user_id is required"}), 400
+
+    # Обновляем активность пользователя
+    update_user_activity(user_id)
 
     with get_connection() as conn:
         with conn.cursor() as cursor:
@@ -367,14 +407,35 @@ def get_chats():
                         WHERE messages.chat_id = chats.id
                         ORDER BY messages.id DESC
                         LIMIT 1
-                    ) AS last_sender_id
+                    ) AS last_sender_id,
+                    (
+                        SELECT json_agg(
+                            json_build_object(
+                                'id', u.id,
+                                'display_name', u.display_name,
+                                'online', EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - u.last_activity)) < 30
+                            )
+                        )
+                        FROM chat_members cm
+                        JOIN users u ON u.id = cm.user_id
+                        WHERE cm.chat_id = chats.id
+                          AND cm.user_id != %s
+                    ) AS members
                 FROM chats
                 JOIN chat_members ON chat_members.chat_id = chats.id
                 WHERE chat_members.user_id = %s
+                GROUP BY chats.id
                 ORDER BY chats.id
-            """, (user_id, user_id))
+            """, (user_id, user_id, user_id))
 
             chats = cursor.fetchall()
+
+            # Преобразуем members из JSON в список
+            for chat in chats:
+                if chat["members"]:
+                    chat["members"] = chat["members"]
+                else:
+                    chat["members"] = []
 
     return jsonify(chats)
 
@@ -389,6 +450,9 @@ def create_chat():
 
     if user_id is None:
         return jsonify({"error": "user_id is required"}), 400
+
+    # Обновляем активность
+    update_user_activity(user_id)
 
     if name and usernames:
         with get_connection() as conn:
@@ -460,6 +524,9 @@ def get_messages():
     if user_id is None:
         return jsonify({"error": "user_id is required"}), 400
 
+    # Обновляем активность
+    update_user_activity(user_id)
+
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
@@ -468,6 +535,7 @@ def get_messages():
                     messages.chat_id,
                     messages.sender_id,
                     users.display_name AS sender_name,
+                    users.color AS sender_color,
                     messages.text,
                     messages.created_at,
                     CASE
@@ -499,6 +567,9 @@ def create_message():
     if text == "":
         return jsonify({"error": "text is required"}), 400
 
+    # Обновляем активность
+    update_user_activity(user_id)
+
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -515,8 +586,37 @@ def create_message():
     return jsonify(message), 201
 
 
+@app.route("/api/user/color", methods=["PUT"])
+def update_user_color():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    color = data.get("color", "").strip()
+
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+    if not color:
+        return jsonify({"error": "color is required"}), 400
+
+    if not color.startswith("#") or len(color) != 7:
+        return jsonify({"error": "Invalid color format (use #RRGGBB)"}), 400
+
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "UPDATE users SET color = %s WHERE id = %s RETURNING id, username, display_name, color",
+                (color, user_id)
+            )
+            updated_user = cursor.fetchone()
+            conn.commit()
+
+    if not updated_user:
+        return jsonify({"error": "User not found"}), 404
+
+    return jsonify(updated_user), 200
+
+
 init_db()
 seed_db()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)

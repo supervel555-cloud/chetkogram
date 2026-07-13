@@ -56,6 +56,9 @@ const stickerGrid = document.getElementById("stickerGrid");
 // Контейнер для уведомлений
 const notificationContainer = document.getElementById("notificationContainer");
 
+// Элемент для количества онлайн
+const onlineCountElement = document.getElementById("onlineCount");
+
 let currentUser = null;
 let currentChatId = null;
 let chats = [];
@@ -65,12 +68,12 @@ let lastMessageMap = {};
 
 // Разрешение на уведомления
 let notificationPermission = false;
-let notificationsEnabled = true; // по умолчанию включены
+let notificationsEnabled = true;
 
 // Список стикеров (эмодзи)
 let stickerEmojis = [];
 
-// Загружаем настройки из localStorage
+// --- Загрузка настроек ---
 function loadSettings() {
     const saved = localStorage.getItem("chetkogram_settings");
     if (saved) {
@@ -83,19 +86,16 @@ function loadSettings() {
     updateNotificationsStatus();
 }
 
-// Сохраняем настройки в localStorage
 function saveSettings() {
     localStorage.setItem("chetkogram_settings", JSON.stringify({
         notificationsEnabled: notificationsEnabled
     }));
 }
 
-// Обновить текст статуса уведомлений
 function updateNotificationsStatus() {
     notificationsStatus.textContent = notificationsEnabled ? "Включены" : "Выключены";
 }
 
-// Запрос разрешения на уведомления (только по клику)
 function requestNotificationPermission() {
     if (!("Notification" in window)) {
         alert("Ваш браузер не поддерживает уведомления");
@@ -120,7 +120,6 @@ function requestNotificationPermission() {
     });
 }
 
-// Показать уведомление (системное или внутреннее)
 function showNotification(text) {
     if (!notificationsEnabled) return;
 
@@ -134,12 +133,9 @@ function showNotification(text) {
                 notification.close();
             }, 3000);
             return;
-        } catch (e) {
-            // fallback
-        }
+        } catch (e) {}
     }
 
-    // Внутреннее уведомление
     const notification = document.createElement("div");
     notification.className = "notification";
 
@@ -197,11 +193,15 @@ function showMessenger() {
     authScreen.classList.add("hidden");
     app.classList.remove("hidden");
     currentUserName.textContent = currentUser.display_name;
+    // Начинаем обновлять онлайн
+    startOnlineUpdates();
 }
 
 function showAuthScreen() {
     app.classList.add("hidden");
     authScreen.classList.remove("hidden");
+    // Останавливаем обновление онлайна
+    stopOnlineUpdates();
 }
 
 async function login(username, password) {
@@ -236,7 +236,6 @@ async function register(username, displayName, password) {
     await loadChats();
 }
 
-// Удаление чата
 async function deleteChat(chatId) {
     if (!confirm("Удалить этот чат?")) return;
 
@@ -328,7 +327,7 @@ async function loadChats() {
 
     const currentChat = chats.find(chat => chat.id === currentChatId);
     if (currentChat) {
-        chatHeader.innerHTML = `<h3>${currentChat.title}</h3>`;
+        updateChatHeader(currentChat);
     } else {
         chatHeader.innerHTML = "<h3>Выбери чат</h3>";
     }
@@ -354,7 +353,33 @@ function renderChats() {
 
         const titleElement = document.createElement("div");
         titleElement.className = "chat-name";
-        titleElement.textContent = chat.title;
+
+        // Имя чата и индикатор онлайна
+        if (chat.members && chat.members.length === 1) {
+            // Личный чат
+            const member = chat.members[0];
+            titleElement.textContent = member.display_name;
+            const indicator = document.createElement("span");
+            indicator.className = "online-indicator";
+            if (member.online) {
+                indicator.classList.add("online");
+            }
+            titleElement.appendChild(indicator);
+        } else {
+            // Групповой чат – показываем название и количество онлайн
+            titleElement.textContent = chat.title;
+            if (chat.members) {
+                const onlineCount = chat.members.filter(m => m.online).length;
+                if (onlineCount > 0) {
+                    const onlineText = document.createElement("span");
+                    onlineText.style.fontSize = "12px";
+                    onlineText.style.fontWeight = "normal";
+                    onlineText.style.color = "#27ae60";
+                    onlineText.textContent = ` (${onlineCount} онлайн)`;
+                    titleElement.appendChild(onlineText);
+                }
+            }
+        }
 
         const lastMessageElement = document.createElement("div");
         lastMessageElement.className = "chat-last-message";
@@ -377,13 +402,27 @@ function renderChats() {
 
         chatElement.addEventListener("click", async function () {
             currentChatId = chat.id;
-            chatHeader.innerHTML = `<h3>${chat.title}</h3>`;
+            updateChatHeader(chat);
             renderChats();
             await loadMessages();
         });
 
         chatList.appendChild(chatElement);
     });
+}
+
+function updateChatHeader(chat) {
+    let title = chat.title;
+    let statusText = "";
+    if (chat.members && chat.members.length === 1) {
+        const member = chat.members[0];
+        title = member.display_name;
+        statusText = member.online ? "🟢 онлайн" : "⚪ офлайн";
+    } else if (chat.members) {
+        const onlineCount = chat.members.filter(m => m.online).length;
+        statusText = `${onlineCount} из ${chat.members.length} онлайн`;
+    }
+    chatHeader.innerHTML = `<h3>${title} <span style="font-size:14px;font-weight:normal;color:#555;">${statusText}</span></h3>`;
 }
 
 async function loadMessages() {
@@ -404,11 +443,13 @@ function renderMessages(chatMessages) {
         const sender = document.createElement("div");
         sender.classList.add("message-sender");
         sender.textContent = message.sender_type === "me" ? "Вы" : (message.sender_name || "Неизвестный");
+        if (message.sender_color) {
+            sender.style.color = message.sender_color;
+        }
 
         const messageElement = document.createElement("div");
         const text = message.text.trim();
 
-        // Проверяем, является ли сообщение стикером (по списку загруженных эмодзи)
         const isSticker = stickerEmojis.includes(text);
 
         if (isSticker) {
@@ -581,10 +622,42 @@ function closeStickerPanel() {
 // === Настройки ===
 function openSettings() {
     settingsModal.classList.remove("hidden");
+    // Подставляем текущий цвет, если есть
+    if (currentUser && currentUser.color) {
+        document.getElementById("nickColorInput").value = currentUser.color;
+    }
 }
 
 function closeSettings() {
     settingsModal.classList.add("hidden");
+}
+
+// === Онлайн ===
+let onlineUpdateInterval = null;
+
+async function updateOnlineCount() {
+    try {
+        const response = await fetch("/api/online_count");
+        if (response.ok) {
+            const data = await response.json();
+            onlineCountElement.textContent = data.online_count;
+        }
+    } catch (e) {
+        // ignore
+    }
+}
+
+function startOnlineUpdates() {
+    if (onlineUpdateInterval) return;
+    updateOnlineCount(); // сразу обновляем
+    onlineUpdateInterval = setInterval(updateOnlineCount, 5000);
+}
+
+function stopOnlineUpdates() {
+    if (onlineUpdateInterval) {
+        clearInterval(onlineUpdateInterval);
+        onlineUpdateInterval = null;
+    }
 }
 
 // === Выход ===
@@ -685,7 +758,7 @@ stickerBtn.addEventListener("click", function () {
 });
 closeStickerBtn.addEventListener("click", closeStickerPanel);
 
-// Загрузка стикеров при старте
+// Загрузка стикеров
 loadStickers();
 
 // Загрузка настроек
