@@ -7,7 +7,7 @@
 body {
     height: 100vh;
     font-family: Arial, sans-serif;
-    background: #fff9e6;
+    background: #faf6ec; /* очень светлый желтый */
     overflow: hidden;
 }
 
@@ -19,7 +19,7 @@ body {
 .auth-screen {
     width: 100vw;
     height: 100vh;
-    background: #f5d742;
+    background: #f0e6d0; /* бледно-желтый */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -28,16 +28,16 @@ body {
 .auth-card {
     width: 380px;
     background: white;
-    border: 3px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 16px;
     padding: 24px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
 .auth-card h1 {
     text-align: center;
     margin-bottom: 8px;
-    color: #7a5f0a;
+    color: #222;
 }
 
 .auth-subtitle {
@@ -55,17 +55,17 @@ body {
 .auth-tab {
     flex: 1;
     padding: 10px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 10px;
     background: white;
     cursor: pointer;
-    color: #7a5f0a;
+    color: #222;
     font-weight: bold;
 }
 
 .auth-tab.active {
-    background: #f5d742;
-    color: #4d3b06;
+    background: #f0e6d0;
+    color: #222;
 }
 
 .auth-form {
@@ -76,23 +76,23 @@ body {
 
 .auth-form input {
     padding: 12px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 10px;
     outline: none;
 }
 
 .auth-form button {
     padding: 12px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 10px;
-    background: #f5d742;
-    color: #4d3b06;
+    background: #f0e6d0;
+    color: #222;
     font-weight: bold;
     cursor: pointer;
 }
 
 .auth-form button:hover {
-    background: #e6c531;
+    background: #e6d8bc;
 }
 
 .auth-error {
@@ -106,26 +106,26 @@ body {
 .app {
     display: flex;
     height: 100vh;
-    background: #fff9e6;
+    background: #faf6ec;
 }
 
 /* Левая панель */
 .sidebar {
     width: 320px;
-    background: #fffdf5;
-    border-right: 3px solid #d4a017;
+    background: #fcf8f0;
+    border-right: 2px solid #d4c48a;
     display: flex;
     flex-direction: column;
 }
 
 .sidebar-header {
     padding: 16px;
-    border-bottom: 3px solid #d4a017;
+    border-bottom: 2px solid #d4c48a;
 }
 
 .sidebar-header h2 {
     margin-bottom: 12px;
-    color: #7a5f0a;
+    color: #222; /* черный */
 }
 
 /* Текущий пользователь */
@@ -136,34 +136,34 @@ body {
     gap: 8px;
     margin-bottom: 14px;
     padding: 10px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 10px;
-    background: #fef5d5;
+    background: #f5efe0;
 }
 
 .current-user-label {
     font-size: 12px;
-    color: #7a5f0a;
+    color: #555;
     margin-bottom: 3px;
 }
 
 .current-user-name {
     font-weight: bold;
-    color: #4d3b06;
+    color: #222;
 }
 
 .logout-btn, .settings-btn {
     padding: 8px 10px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 8px;
     background: white;
     cursor: pointer;
-    color: #7a5f0a;
+    color: #222;
     font-weight: bold;
 }
 
 .logout-btn:hover, .settings-btn:hover {
-    background: #f5d742;
+    background: #f0e6d0;
 }
 
 .settings-btn {
@@ -183,37 +183,37 @@ body {
     flex: 1;
     min-width: 100px;
     padding: 9px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 8px;
     outline: none;
 }
 
 .create-chat-panel button {
     padding: 9px 10px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 8px;
-    background: #f5d742;
-    color: #4d3b06;
+    background: #f5efe0;
+    color: #222;
     font-weight: bold;
     cursor: pointer;
     white-space: nowrap;
 }
 
 .create-chat-panel button:hover {
-    background: #e6c531;
+    background: #e6d8bc;
 }
 
 /* Поиск */
 .search-input {
     width: 100%;
     padding: 10px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 10px;
     outline: none;
 }
 
 .search-input:focus {
-    border-color: #b8890e;
+    border-color: #b8a86e;
 }
 
 /* Список чатов */
@@ -229,7 +229,7 @@ body {
     align-items: center;
     padding: 12px;
     margin-bottom: 10px;
-    border: 3px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 10px;
     cursor: pointer;
     background: white;
@@ -237,12 +237,12 @@ body {
 }
 
 .chat-item:hover {
-    background: #fef5d5;
+    background: #f5efe0;
 }
 
 .chat-item.active {
-    background: #fef5d5;
-    border-color: #b8890e;
+    background: #f5efe0;
+    border-color: #b8a86e;
 }
 
 .chat-info {
@@ -253,12 +253,12 @@ body {
 .chat-name {
     font-weight: bold;
     margin-bottom: 6px;
-    color: #4d3b06;
+    color: #222;
 }
 
 .chat-last-message {
     font-size: 14px;
-    color: #777;
+    color: #666;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -299,13 +299,13 @@ body {
 
 .chat-header {
     padding: 16px;
-    background: #fffdf5;
-    border-bottom: 3px solid #d4a017;
+    background: #fcf8f0;
+    border-bottom: 2px solid #d4c48a;
 }
 
 .chat-header h3 {
     font-size: 20px;
-    color: #4d3b06;
+    color: #222;
 }
 
 /* Сообщения */
@@ -339,18 +339,18 @@ body {
 
 .message-sender {
     font-size: 12px;
-    color: #777;
+    color: #666;
     margin-bottom: 2px;
     padding-left: 4px;
 }
 
 .message-wrapper.me .message-sender {
-    color: #b8890e;
+    color: #b8a86e;
 }
 
 .message {
     padding: 10px 14px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 14px;
     word-wrap: break-word;
     overflow-wrap: anywhere;
@@ -361,14 +361,14 @@ body {
 }
 
 .message.me {
-    background: #f5d742;
-    color: #4d3b06;
+    background: #f0e6d0;
+    color: #222;
     border-bottom-right-radius: 4px;
 }
 
 .message.other {
-    background: #fef5d5;
-    color: #4d3b06;
+    background: #f5efe0;
+    color: #222;
     border-bottom-left-radius: 4px;
 }
 
@@ -378,7 +378,7 @@ body {
     padding: 6px 10px;
     border-radius: 14px;
     background: transparent;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     text-align: center;
     min-width: 60px;
     min-height: 60px;
@@ -388,12 +388,12 @@ body {
 }
 
 .message-wrapper.me .message.sticker {
-    background: #f5d742;
-    border-color: #c99f10;
+    background: #f0e6d0;
+    border-color: #c4b480;
 }
 .message-wrapper.other .message.sticker {
-    background: #fef5d5;
-    border-color: #d4a017;
+    background: #f5efe0;
+    border-color: #d4c48a;
 }
 
 /* Форма отправки */
@@ -401,8 +401,8 @@ body {
     display: flex;
     gap: 10px;
     padding: 16px;
-    background: #fffdf5;
-    border-top: 3px solid #d4a017;
+    background: #fcf8f0;
+    border-top: 2px solid #d4c48a;
     align-items: center;
 }
 
@@ -410,21 +410,21 @@ body {
     flex: 1;
     min-width: 0;
     padding: 12px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 10px;
     outline: none;
     font-size: 14px;
 }
 
 .message-form input:focus {
-    border-color: #b8890e;
+    border-color: #b8a86e;
 }
 
 .message-form button {
     padding: 12px 18px;
-    border: 2px solid #d4a017;
-    background: #f5d742;
-    color: #4d3b06;
+    border: 2px solid #d4c48a;
+    background: #f5efe0;
+    color: #222;
     font-weight: bold;
     border-radius: 10px;
     cursor: pointer;
@@ -432,13 +432,13 @@ body {
 }
 
 .message-form button:hover {
-    background: #e6c531;
+    background: #e6d8bc;
 }
 
 .sticker-btn {
     padding: 10px 12px;
-    border: 2px solid #d4a017;
-    background: #fef5d5;
+    border: 2px solid #d4c48a;
+    background: #f5efe0;
     border-radius: 10px;
     cursor: pointer;
     font-size: 20px;
@@ -446,7 +446,7 @@ body {
     transition: background 0.2s;
 }
 .sticker-btn:hover {
-    background: #f5d742;
+    background: #e6d8bc;
 }
 
 /* Панель стикеров */
@@ -455,12 +455,12 @@ body {
     bottom: 80px;
     right: 20px;
     background: white;
-    border: 3px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 16px;
     padding: 12px;
     z-index: 1500;
     max-width: 300px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .sticker-panel-header {
@@ -469,7 +469,7 @@ body {
     align-items: center;
     margin-bottom: 10px;
     font-weight: bold;
-    color: #4d3b06;
+    color: #222;
 }
 
 .close-sticker-btn {
@@ -497,11 +497,11 @@ body {
     border-radius: 10px;
     cursor: pointer;
     transition: 0.2s;
-    background: #fef5d5;
+    background: #f5efe0;
 }
 .sticker-item:hover {
-    border-color: #d4a017;
-    background: #f5d742;
+    border-color: #d4c48a;
+    background: #e6d8bc;
 }
 
 /* Модальные окна */
@@ -512,7 +512,7 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0,0,0,0.3);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -522,7 +522,7 @@ body {
     background: white;
     padding: 30px;
     border-radius: 16px;
-    border: 3px solid #d4a017;
+    border: 2px solid #d4c48a;
     width: 400px;
     max-width: 90%;
     position: relative;
@@ -543,7 +543,7 @@ body {
 .modal-content h2 {
     margin-bottom: 16px;
     text-align: center;
-    color: #4d3b06;
+    color: #222;
 }
 
 #groupForm {
@@ -554,32 +554,32 @@ body {
 
 #groupForm input {
     padding: 10px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 8px;
     outline: none;
 }
 
 #groupForm button {
     padding: 10px;
-    border: 2px solid #d4a017;
+    border: 2px solid #d4c48a;
     border-radius: 8px;
-    background: #f5d742;
-    color: #4d3b06;
+    background: #f5efe0;
+    color: #222;
     font-weight: bold;
     cursor: pointer;
 }
 
 #groupForm button:hover {
-    background: #e6c531;
+    background: #e6d8bc;
 }
 
 #groupForm button[type="button"] {
-    background: #fef5d5;
-    color: #4d3b06;
+    background: #f5efe0;
+    color: #222;
 }
 
 #groupForm button[type="button"]:hover {
-    background: #f5d742;
+    background: #e6d8bc;
 }
 
 #groupError {
@@ -626,7 +626,7 @@ body {
 }
 
 input:checked + .slider {
-    background-color: #f5d742;
+    background-color: #d4c48a;
 }
 
 input:checked + .slider:before {
@@ -646,8 +646,8 @@ input:checked + .slider:before {
 }
 
 .notification {
-    background: #4d3b06;
-    color: #fff9e6;
+    background: #444;
+    color: #faf6ec;
     padding: 14px 18px;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
